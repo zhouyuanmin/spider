@@ -39,6 +39,12 @@ page_elements = {
     "login_email": '//*[@id="inputEmailAddress"]',
     "login_password": '//*[@id="inputPassword"]',
     "login_button": '//*[@id="loginBtn"]',
+    # "product_keywords": '//*[@id="searchText"]',
+    # "part_search_button": '//*[@id="partSearchBtn"]',
+    "product_items": '//*[@id="searchResultTbody"]/tr',
+    # "product_href": '//*[@id="searchResultTbody"]/tr[1]/td/strong/a',
+    "msrp": '//*[@class="msrp"]/span',
+    "price_info": '//*[@class="price-info"]/a',
 }
 
 
@@ -152,6 +158,14 @@ def login(check=True):
         return browser
 
 
+def get_dollar(text):
+    if "$" not in text:
+        raise
+    else:
+        dollar = float(text.strip("$"))
+    return dollar
+
+
 # 业务逻辑函数
 def get_data(path, begin_line=17):
     excel_data = xlrd.open_workbook(filename=path)
@@ -161,3 +175,27 @@ def get_data(path, begin_line=17):
     zipped = zip(parts, manufacturers)
     zipped = list(zipped)
     return zipped
+
+
+def get_model_param_by_ec(browser, part):
+    # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
+    url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
+    browser.get(url)
+    waiting_to_load(browser)
+
+    # 最低价产品(第一个)
+    product_items = browser.find_elements_by_xpath(page_elements.get("product_items"))
+    if product_items:
+        msrp_divs = browser.find_elements_by_xpath(page_elements.get("msrp"))
+        msrp = get_dollar(msrp_divs[0].text)
+        federal_govt_spa_divs = browser.find_elements_by_xpath(
+            page_elements.get("price_info")
+        )
+        federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
+        return {
+            "msrp": msrp,
+            "federal_govt_spa": federal_govt_spa,
+        }
+    else:
+        # 无产品
+        return {}
