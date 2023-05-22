@@ -169,6 +169,7 @@ def get_dollar(text):
         logging.error(text)
         raise
     else:
+        text = text.replace(",", "")  # 处理逗号
         dollar = float(text.strip("$"))
     return dollar
 
@@ -248,7 +249,7 @@ def get_model_param_by_gsa(browser, part):
                 valid_source_urls.append([source, url, product_name, manufacturer_name])
             elif not first_source_urls:
                 first_source_urls.append([source, url, product_name, manufacturer_name])
-        # 排序，取前3
+        # 排序,取前3
         valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
         if len(valid_source_urls) > 3:
             valid_source_urls = valid_source_urls[0:3]
@@ -333,7 +334,7 @@ def spider():
             browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
             browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
             # 运行出现错误10次
-            if error_count >= 10:
+            if error_count >= 0:  # 遇到问题,直接停止
                 sys.exit(0)
             else:
                 error_count += 1
