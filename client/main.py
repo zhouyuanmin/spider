@@ -16,7 +16,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-from goods.models import Good
+from goods.models import Good, ECGood
 
 # 日志配置
 logging.basicConfig(
@@ -314,6 +314,11 @@ def save_to_model(params):
     good.save()
 
 
+def save_to_model_ec(params):
+    ec_good = ECGood(**params)
+    ec_good.save()
+
+
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
@@ -349,5 +354,36 @@ def spider():
                 save_to_model(param_kvs)
 
 
+def spider_ec():
+    browser_ec = login()
+    data = get_data("productListsQuoteAll.xlsx")
+    error_count = 0
+    for part, manufacturer in data:
+        time.sleep(1)  # 休息1秒
+        try:
+            data_ec = get_model_param_by_ec(browser_ec, part)
+        except Exception as e:
+            logging.error(e)
+            error_file = StringIO()
+            traceback.print_exc(file=error_file)
+            details = error_file.getvalue()
+            file_name = f"{part}_{manufacturer}_{int(time.time())}"
+            with open(f"{file_name}.txt", "w") as f:
+                f.write(details)
+            browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
+            # 运行出现错误10次
+            if error_count >= 0:  # 遇到问题,直接停止
+                sys.exit(0)
+            else:
+                error_count += 1
+        else:
+            param_kvs = {
+                "part": part,
+                "manufacturer": manufacturer,
+            }
+            param_kvs.update(data_ec)
+            save_to_model_ec(param_kvs)
+
+
 if __name__ == "__main__":
-    spider()
+    spider_ec()
