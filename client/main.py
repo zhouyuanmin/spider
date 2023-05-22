@@ -10,6 +10,13 @@ import sys
 import os
 import re
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
+from django.core.wsgi import get_wsgi_application
+
+application = get_wsgi_application()
+from goods.models import Good
+
+
 # 日志配置
 logging.basicConfig(
     level=logging.INFO,
@@ -286,3 +293,8 @@ def get_model_param_by_gsa(browser, part):
     else:
         # 无产品
         return []
+
+
+def save_to_model(params):
+    good = Good(**params)
+    good.save()
