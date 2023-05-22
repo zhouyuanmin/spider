@@ -1,6 +1,8 @@
 from selenium.common import exceptions
 from selenium import webdriver
 from pathlib import Path
+from io import StringIO
+import traceback
 import logging
 import random
 import xlrd
@@ -15,7 +17,6 @@ from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
 from goods.models import Good
-
 
 # 日志配置
 logging.basicConfig(
@@ -260,6 +261,14 @@ def get_model_param_by_gsa(browser, part):
         for source, url, product_name, manufacturer_name in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
+
+            description_divs = browser.find_elements_by_xpath(
+                page_elements.get("description")
+            )
+            if not description_divs:
+                browser.get(url)
+                waiting_to_load(browser)
+                time.sleep(2)
             description_div = browser.find_element_by_xpath(
                 page_elements.get("description")
             )
@@ -296,5 +305,48 @@ def get_model_param_by_gsa(browser, part):
 
 
 def save_to_model(params):
+    source = params.pop("source")
+    url = params.pop("url")
+    note_kv = {"source": source, "url": url}
+    params["note"] = json.dumps(note_kv)
     good = Good(**params)
     good.save()
+
+
+def spider():
+    browser_ec = login()
+    browser_gsa = create_browser()
+    data = get_data("productListsQuoteAll.xlsx")
+    error_count = 0
+    for part, manufacturer in data:
+        try:
+            data_ec = get_model_param_by_ec(browser_ec, part)
+            data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
+        except Exception as e:
+            logging.error(e)
+            error_file = StringIO()
+            traceback.print_exc(file=error_file)
+            details = error_file.getvalue()
+            file_name = f"{part}_{manufacturer}_{int(time.time())}"
+            with open(f"{file_name}.txt", "w") as f:
+                f.write(details)
+            browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
+            browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
+            # 运行出现错误10次
+            if error_count >= 10:
+                sys.exit(0)
+            else:
+                error_count += 1
+        else:
+            for data_gsa in data_gsa_list:
+                param_kvs = {
+                    "part": part,
+                    "manufacturer": manufacturer,
+                }
+                param_kvs.update(data_ec)
+                param_kvs.update(data_gsa)
+                save_to_model(param_kvs)
+
+
+if __name__ == "__main__":
+    spider()
