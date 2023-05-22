@@ -48,8 +48,11 @@ page_elements = {
     "price_info": '//*[@class="price-info"]/a',
     "mfr_part_no": '//*[@id="searchResultTbody"]//tbody/tr[1]/td[1]/span',
     "product_list": '//*[@class="productListControl isList"]/app-ux-product-display-inline',
-    "sources": '//span[@align="left"]',
-    "item_a": '//div[@class="itemName"]/a',
+    "sources": './/span[@align="left"]',
+    "item_a": './/div[@class="itemName"]/a',
+    "mfr_name": './/div[@class="mfrName"]',
+    "description": '//div[@heading="Vendor Description"]/div',
+    "gsa_advantage_price": '//table[@role="presentation"]/tbody//strong',
 }
 
 
@@ -171,6 +174,14 @@ def get_dollar(text):
     return dollar
 
 
+def get_num(text):
+    num = re.findall(r"\d+", text)
+    if num:
+        return int(num[0])
+    else:
+        raise
+
+
 # 业务逻辑函数
 def get_data(path, begin_line=17):
     excel_data = xlrd.open_workbook(filename=path)
@@ -224,16 +235,19 @@ def get_model_param_by_gsa(browser, part):
         valid_source_urls = []
         first_source_urls = []
         for product_div in product_divs:
-            html = product_div.get_attribute("innerHTML")
-            source_urls = re.findall(
-                pattern=r'"(/advantage/ws/.*?)".*?(\d{1,3}) source', string="body"
+            source_div = product_div.find_element_by_xpath(page_elements.get("sources"))
+            source = get_num(source_div.text)
+            url_div = product_div.find_element_by_xpath(page_elements.get("item_a"))
+            url = url_div.get_attribute("href")
+            product_name = url_div.text
+            mfr_name_div = product_div.find_element_by_xpath(
+                page_elements.get("mfr_name")
             )
-            source = int(source_urls[0][1])
-            url = "https://www.gsaadvantage.gov" + source_urls[0][0]
+            manufacturer_name = mfr_name_div.text[4:].strip()
             if source >= gsa_source_level:
-                valid_source_urls.append([source, url])
+                valid_source_urls.append([source, url, product_name, manufacturer_name])
             elif not first_source_urls:
-                first_source_urls.append([source, url])
+                first_source_urls.append([source, url, product_name, manufacturer_name])
         # 排序，取前3
         valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
         if len(valid_source_urls) > 3:
@@ -242,17 +256,40 @@ def get_model_param_by_gsa(browser, part):
         if not valid_source_urls:  # 如果没有符合要求的,则采集第一个产品
             valid_source_urls = first_source_urls
 
+        gsa_data = []
         # 到详细页采集数据
-        for source, url in valid_source_urls:
+        for source, url, product_name, manufacturer_name in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
-            manufacturer_name = ""
-            product_name = ""
-            product_description = ""
-            gsa_advantage_price_1 = ""
-            gsa_advantage_price_2 = ""
-            gsa_advantage_price_3 = ""
-
+            description_div = browser.find_element_by_xpath(
+                page_elements.get("description")
+            )
+            browser.execute_script(
+                "window.scrollTo(0, {})".format(description_div.location.get("y") - 160)
+            )
+            waiting_to_load(browser)
+            product_description = description_div.text
+            gsa_advantage_price_divs = browser.find_elements_by_xpath(
+                page_elements.get("description")
+            )[1:]
+            gsa_advantage_prices = [0, 0, 0]
+            for i, div in enumerate(gsa_advantage_price_divs):
+                if i >= 3:  # 0,1,2
+                    break
+                text = div.text
+                if "$" in text:
+                    gsa_advantage_prices[i] = get_dollar(text)
+            item_data = {
+                "source": source,
+                "url": url,
+                "product_name": product_name,
+                "manufacturer_name": manufacturer_name,
+                "product_description": product_description,
+                "gsa_advantage_price_1": gsa_advantage_prices[0],
+                "gsa_advantage_price_2": gsa_advantage_prices[1],
+                "gsa_advantage_price_3": gsa_advantage_prices[2],
+            }
+            gsa_data.append(item_data)
     else:
         # 无产品
-        return {}
+        return []
