@@ -1,18 +1,8 @@
 from selenium.common import exceptions
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-from multiprocessing import Process
 from selenium import webdriver
 from pathlib import Path
-from io import StringIO, BytesIO
-from PIL import Image
-import traceback
-import requests
 import logging
-import hashlib
 import random
-import base64
 import xlrd
 import json
 import time
@@ -168,6 +158,7 @@ def login(check=True):
 
 def get_dollar(text):
     if "$" not in text:
+        logging.error(text)
         raise
     else:
         dollar = float(text.strip("$"))
@@ -179,6 +170,7 @@ def get_num(text):
     if num:
         return int(num[0])
     else:
+        logging.error(text)
         raise
 
 
@@ -211,7 +203,7 @@ def get_model_param_by_ec(browser, part):
         mfr_part_no_divs = browser.find_elements_by_xpath(
             page_elements.get("mfr_part_no")
         )
-        mfr_part_no = get_dollar(mfr_part_no_divs[0].text)
+        mfr_part_no = mfr_part_no_divs[0].text
         vendor_part_no = mfr_part_no
         return {
             "mfr_part_no": mfr_part_no,
@@ -270,7 +262,7 @@ def get_model_param_by_gsa(browser, part):
             waiting_to_load(browser)
             product_description = description_div.text
             gsa_advantage_price_divs = browser.find_elements_by_xpath(
-                page_elements.get("description")
+                page_elements.get("gsa_advantage_price")
             )[1:]
             gsa_advantage_prices = [0, 0, 0]
             for i, div in enumerate(gsa_advantage_price_divs):
@@ -290,6 +282,7 @@ def get_model_param_by_gsa(browser, part):
                 "gsa_advantage_price_3": gsa_advantage_prices[2],
             }
             gsa_data.append(item_data)
+        return gsa_data
     else:
         # 无产品
         return []
