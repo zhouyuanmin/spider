@@ -358,8 +358,10 @@ def spider_ec():
     browser_ec = login()
     data = get_data("productListsQuoteAll.xlsx")
     error_count = 0
+    index = 1
     for part, manufacturer in data:
-        time.sleep(1)  # 休息1秒
+        print(f"index:{index},part:{part},manufacturer:{manufacturer}")
+        index += 1
         try:
             data_ec = get_model_param_by_ec(browser_ec, part)
         except Exception as e:
