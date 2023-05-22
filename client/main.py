@@ -33,6 +33,7 @@ window_width, window_height = (1250, 900)  # 需要根据分辨率来确定窗�
 cookies_path = os.path.join(base_dir, "cookies.txt")
 login_email = "lwang@techfocusUSA.com"
 login_password = "Uz#.ZeF8WYqJ3im"
+gsa_source_level = 3  # gsa网站source最低值
 
 # 页面节点
 page_elements = {
@@ -45,6 +46,10 @@ page_elements = {
     # "product_href": '//*[@id="searchResultTbody"]/tr[1]/td/strong/a',
     "msrp": '//*[@class="msrp"]/span',
     "price_info": '//*[@class="price-info"]/a',
+    "mfr_part_no": '//*[@id="searchResultTbody"]//tbody/tr[1]/td[1]/span',
+    "product_list": '//*[@class="productListControl isList"]/app-ux-product-display-inline',
+    "sources": '//span[@align="left"]',
+    "item_a": '//div[@class="itemName"]/a',
 }
 
 
@@ -192,10 +197,62 @@ def get_model_param_by_ec(browser, part):
             page_elements.get("price_info")
         )
         federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
+        mfr_part_no_divs = browser.find_elements_by_xpath(
+            page_elements.get("mfr_part_no")
+        )
+        mfr_part_no = get_dollar(mfr_part_no_divs[0].text)
+        vendor_part_no = mfr_part_no
         return {
+            "mfr_part_no": mfr_part_no,
+            "vendor_part_no": vendor_part_no,
             "msrp": msrp,
             "federal_govt_spa": federal_govt_spa,
         }
+    else:
+        # 无产品
+        return {}
+
+
+def get_model_param_by_gsa(browser, part):
+    # 搜索
+    url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{part}&db=0&searchType=0"
+    browser.get(url)
+    waiting_to_load(browser)
+
+    product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
+    if product_divs:
+        valid_source_urls = []
+        first_source_urls = []
+        for product_div in product_divs:
+            html = product_div.get_attribute("innerHTML")
+            source_urls = re.findall(
+                pattern=r'"(/advantage/ws/.*?)".*?(\d{1,3}) source', string="body"
+            )
+            source = int(source_urls[0][1])
+            url = "https://www.gsaadvantage.gov" + source_urls[0][0]
+            if source >= gsa_source_level:
+                valid_source_urls.append([source, url])
+            elif not first_source_urls:
+                first_source_urls.append([source, url])
+        # 排序，取前3
+        valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
+        if len(valid_source_urls) > 3:
+            valid_source_urls = valid_source_urls[0:3]
+
+        if not valid_source_urls:  # 如果没有符合要求的,则采集第一个产品
+            valid_source_urls = first_source_urls
+
+        # 到详细页采集数据
+        for source, url in valid_source_urls:
+            browser.get(url)
+            waiting_to_load(browser)
+            manufacturer_name = ""
+            product_name = ""
+            product_description = ""
+            gsa_advantage_price_1 = ""
+            gsa_advantage_price_2 = ""
+            gsa_advantage_price_3 = ""
+
     else:
         # 无产品
         return {}
