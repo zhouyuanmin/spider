@@ -358,12 +358,15 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 543, 100)  # 1600
+    begin = 618
+    data = get_data("productListsQuoteAll.xlsx", begin, 100)  # 1600
     error_count = 0
     index = 1
     for part, manufacturer in data:
         time.sleep(5)  # 基础是10秒每个
-        logging.info(f"index:{index},part:{part},manufacturer:{manufacturer}")
+        logging.info(
+            f"index={index}:{index+begin},part:{part},manufacturer:{manufacturer}"
+        )
         index += 1
         try:
             data_ec = get_model_param_by_ec(browser_ec, part)
