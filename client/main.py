@@ -49,6 +49,7 @@ page_elements = {
     "sources": './/span[@align="left"]',
     "item_a": './/div[@class="itemName"]/a',
     "mfr_name": './/div[@class="mfrName"]',
+    "product_description": '//div[@heading="Product Description"]/div',
     "description": '//div[@heading="Vendor Description"]/div',
     "gsa_advantage_price": '//table[@role="presentation"]/tbody//strong',
 }
@@ -212,7 +213,7 @@ def get_model_param_by_ec(browser, part):
             "federal_govt_spa": obj.federal_govt_spa,
         }
     except ECGood.DoesNotExist:
-        logging.warning(f"part={part},不存在")
+        # logging.warning(f"part={part},不存在")
         pass
     # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
     url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
@@ -251,6 +252,12 @@ def get_model_param_by_gsa(browser, part):
     waiting_to_load(browser)
 
     product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
+    if product_divs:
+        pass
+    else:
+        time.sleep(5)
+        product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
+
     if product_divs:
         valid_source_urls = []
         first_source_urls = []
@@ -298,8 +305,15 @@ def get_model_param_by_gsa(browser, part):
             browser.execute_script(
                 "window.scrollTo(0, {})".format(description_div.location.get("y") - 160)
             )
+            _description_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_description")
+            )
+            if _description_divs:
+                _product_description = _description_divs[0].text
+            else:
+                _product_description = ""
             waiting_to_load(browser)
-            product_description = description_div.text
+            product_description = _product_description + description_div.text
             gsa_advantage_price_divs = browser.find_elements_by_xpath(
                 page_elements.get("gsa_advantage_price")
             )[1:]
@@ -344,7 +358,7 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 365, 100)  # 1600
+    data = get_data("productListsQuoteAll.xlsx", 543, 100)  # 1600
     error_count = 0
     index = 1
     for part, manufacturer in data:
