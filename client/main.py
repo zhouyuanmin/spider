@@ -195,6 +195,17 @@ def get_data(path, begin_line=49):
 
 
 def get_model_param_by_ec(browser, part):
+    try:
+        obj = ECGood.objects.get(part=part)
+        return {
+            "mfr_part_no": obj.mfr_part_no,
+            "vendor_part_no": obj.vendor_part_no,
+            "msrp": obj.msrp,
+            "federal_govt_spa": obj.federal_govt_spa,
+        }
+    except ECGood.DoesNotExist:
+        logging.warning(f"part={part},不存在")
+        pass
     # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
     url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
     browser.get(url)
@@ -322,7 +333,7 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx")
+    data = get_data("productListsQuoteAll.xlsx", 80)
     error_count = 0
     index = 1
     for part, manufacturer in data:
