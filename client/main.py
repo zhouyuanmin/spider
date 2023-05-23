@@ -326,6 +326,7 @@ def spider():
     error_count = 0
     index = 1
     for part, manufacturer in data:
+        time.sleep(10)
         logging.info(f"index:{index},part:{part},manufacturer:{manufacturer}")
         index += 1
         try:
