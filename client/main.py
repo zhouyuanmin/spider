@@ -255,7 +255,7 @@ def get_model_param_by_gsa(browser, part):
         valid_source_urls = []
         first_source_urls = []
         for product_div in product_divs:
-            source_divs = product_div.find_element_by_xpath(
+            source_divs = product_div.find_elements_by_xpath(
                 page_elements.get("sources")
             )
             if not source_divs:  # 有些产品,没有sources
