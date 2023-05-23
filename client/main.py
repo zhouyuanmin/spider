@@ -164,6 +164,14 @@ def login(check=True):
         return browser
 
 
+def update_cookies(browser):
+    cookies = browser.get_cookies()
+    cookies_str = json.dumps(cookies)
+    with open(cookies_path, "w") as f:
+        f.write(cookies_str)
+    return True
+
+
 def get_dollar(text):
     if "$" not in text:
         logging.error(text)
@@ -333,7 +341,7 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 170, 30)
+    data = get_data("productListsQuoteAll.xlsx", 240, 60)
     error_count = 0
     index = 1
     for part, manufacturer in data:
