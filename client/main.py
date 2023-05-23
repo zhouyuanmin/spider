@@ -184,14 +184,14 @@ def get_num(text):
 
 
 # 业务逻辑函数
-def get_data(path, begin_line=49):
+def get_data(path, begin_line=0, count=30):
     excel_data = xlrd.open_workbook(filename=path)
     table = excel_data.sheets()[0]  # 第一个table
     parts = table.col_values(1)[begin_line:]  # 第2列
     manufacturers = table.col_values(2)[begin_line:]  # 第3列
     zipped = zip(parts, manufacturers)
     zipped = list(zipped)
-    return zipped[:30]
+    return zipped[:count]
 
 
 def get_model_param_by_ec(browser, part):
@@ -333,7 +333,7 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 80)
+    data = get_data("productListsQuoteAll.xlsx", 170, 30)
     error_count = 0
     index = 1
     for part, manufacturer in data:
