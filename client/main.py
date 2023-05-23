@@ -323,7 +323,7 @@ def get_model_param_by_gsa(browser, part):
             gsa_data.append(item_data)
         return gsa_data
     else:
-        # 无产品
+        logging.warning(f"part={part}无产品")
         return []
 
 
@@ -344,11 +344,11 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 351, 50)  # 1600
+    data = get_data("productListsQuoteAll.xlsx", 365, 100)  # 1600
     error_count = 0
     index = 1
     for part, manufacturer in data:
-        time.sleep(10)
+        time.sleep(5)  # 基础是10秒每个
         logging.info(f"index:{index},part:{part},manufacturer:{manufacturer}")
         index += 1
         try:
