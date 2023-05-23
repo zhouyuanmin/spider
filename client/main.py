@@ -30,7 +30,7 @@ proxy = "http://127.0.0.1:4780"
 window_width, window_height = (1250, 900)  # 需要根据分辨率来确定窗口大小
 cookies_path = os.path.join(base_dir, "cookies.txt")
 login_email = "lwang@techfocusUSA.com"
-login_password = "Uz#.ZeF8WYqJ3im"
+login_password = "/4WM9ZAtB6c8ph6"
 gsa_source_level = 3  # gsa网站source最低值
 
 # 页面节点
@@ -388,4 +388,4 @@ def spider_ec():
 
 
 if __name__ == "__main__":
-    spider_ec()
+    spider()
