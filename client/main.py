@@ -255,6 +255,11 @@ def get_model_param_by_gsa(browser, part):
         valid_source_urls = []
         first_source_urls = []
         for product_div in product_divs:
+            source_divs = product_div.find_element_by_xpath(
+                page_elements.get("sources")
+            )
+            if not source_divs:  # 有些产品,没有sources
+                continue
             source_div = product_div.find_element_by_xpath(page_elements.get("sources"))
             source = get_num(source_div.text)
             url_div = product_div.find_element_by_xpath(page_elements.get("item_a"))
@@ -286,9 +291,7 @@ def get_model_param_by_gsa(browser, part):
                 page_elements.get("description")
             )
             if not description_divs:
-                browser.get(url)
-                waiting_to_load(browser)
-                time.sleep(2)
+                time.sleep(10)
             description_div = browser.find_element_by_xpath(
                 page_elements.get("description")
             )
@@ -341,7 +344,7 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    data = get_data("productListsQuoteAll.xlsx", 240, 60)
+    data = get_data("productListsQuoteAll.xlsx", 351, 50)  # 1600
     error_count = 0
     index = 1
     for part, manufacturer in data:
