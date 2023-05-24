@@ -192,15 +192,24 @@ def get_num(text):
         raise
 
 
+def save_error_screenshot(browser, sign, detail):
+    time_str = str(int(time.time() * 1000))
+    file_name = f"{sign}_{time_str}_{detail}.png"
+    file_name = os.path.join(base_dir, "error", file_name)
+    browser.get_screenshot_as_file(file_name)
+
+
 # 业务逻辑函数
-def get_data(path, begin_line=0, count=30):
+def get_data(path, begin_line=0, count=None):
     excel_data = xlrd.open_workbook(filename=path)
     table = excel_data.sheets()[0]  # 第一个table
     parts = table.col_values(1)[begin_line:]  # 第2列
     manufacturers = table.col_values(2)[begin_line:]  # 第3列
     zipped = zip(parts, manufacturers)
     zipped = list(zipped)
-    return zipped[:count]
+    if count:
+        zipped = zipped[:count]
+    return zipped
 
 
 def get_model_param_by_ec(browser, part):
@@ -227,15 +236,34 @@ def get_model_param_by_ec(browser, part):
         if not msrp_divs:
             time.sleep(3)
             msrp_divs = browser.find_elements_by_xpath(page_elements.get("msrp"))
-        msrp = get_dollar(msrp_divs[0].text)
+        if msrp_divs:
+            msrp = get_dollar(msrp_divs[0].text)
+        else:
+            save_error_screenshot(browser, "ec", f"{part}_msrp")
+            msrp = 0
+
         federal_govt_spa_divs = browser.find_elements_by_xpath(
             page_elements.get("price_info")
         )
-        federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
+        if not federal_govt_spa_divs:
+            time.sleep(3)
+            federal_govt_spa_divs = browser.find_elements_by_xpath(
+                page_elements.get("price_info")
+            )
+        if federal_govt_spa_divs:
+            federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
+        else:
+            save_error_screenshot(browser, "ec", f"{part}_federal_govt_spa")
+            federal_govt_spa = 0
+
         mfr_part_no_divs = browser.find_elements_by_xpath(
             page_elements.get("mfr_part_no")
         )
-        mfr_part_no = mfr_part_no_divs[0].text
+        if mfr_part_no_divs:
+            mfr_part_no = mfr_part_no_divs[0].text
+        else:
+            save_error_screenshot(browser, "ec", f"{part}_mfr_part_no")
+            mfr_part_no = ""
         vendor_part_no = mfr_part_no
         return {
             "mfr_part_no": mfr_part_no,
@@ -362,14 +390,17 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    begin = 931
-    data = get_data("productListsQuoteAll.xlsx", begin, 200)  # 1600
+    begin = 0
+    data = get_data("productListsQuoteAll.xlsx", begin)  # 1600
     error_count = 0
     index = 1
     for part, manufacturer in data:
         time.sleep(5)  # 基础是10秒每个
+        # 处理float数
+        if isinstance(part, float):
+            part = str(int(part))
         logging.info(
-            f"index={index}:{index+begin},part:{part},manufacturer:{manufacturer}"
+            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
         )
         index += 1
         try:
@@ -386,7 +417,7 @@ def spider():
             browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
             browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
             # 运行出现错误10次
-            if error_count >= 0:  # 遇到问题,直接停止
+            if error_count >= 10:  # 遇到问题,直接停止
                 sys.exit(0)
             else:
                 error_count += 1
