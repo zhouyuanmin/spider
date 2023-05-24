@@ -395,8 +395,8 @@ def save_to_model_ec(params):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
-    begin = 0
-    data = get_data("productListsQuoteAll.xlsx", begin)  # 1600
+    begin = 1
+    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
     error_count = 0
     index = 1
     for part, manufacturer in data:
