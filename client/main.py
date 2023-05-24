@@ -52,6 +52,7 @@ page_elements = {
     "product_description": '//div[@heading="Product Description"]/div',
     "description": '//div[@heading="Vendor Description"]/div',
     "gsa_advantage_price": '//table[@role="presentation"]/tbody//strong',
+    "zip": '//input[@id="zip"]',
 }
 
 
@@ -331,6 +332,10 @@ def get_model_param_by_gsa(browser, part):
             if not description_divs:
                 waiting_to_load(browser)
                 time.sleep(10)
+                # 增加判断是否需要邮编,有则跳过
+                zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
+                if zip_div:
+                    continue
             description_div = browser.find_element_by_xpath(
                 page_elements.get("description")
             )
