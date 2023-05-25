@@ -378,6 +378,10 @@ def get_model_param_by_gsa(browser, part):
         return []
 
 
+def get_model_param_by_inm(browser, part):
+    return {}
+
+
 def save_to_model(params):
     source = params.pop("source")
     url = params.pop("url")
@@ -390,6 +394,11 @@ def save_to_model(params):
 def save_to_model_ec(params):
     ec_good = ECGood(**params)
     ec_good.save()
+
+
+def save_to_model_inm(part, ingram_micro_price):
+    objs = ECGood.objects.filter(part=part)
+    objs.update(ingram_micro_price=ingram_micro_price)
 
 
 def spider():
@@ -470,5 +479,41 @@ def spider_ec():
             save_to_model_ec(param_kvs)
 
 
+def spider_inm():
+    browser_inm = create_browser()
+    begin = 1
+    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
+    error_count = 0
+    index = 1
+    for part, manufacturer in data:
+        time.sleep(5)  # 基础是10秒每个
+        # 处理float数
+        if isinstance(part, float):
+            part = str(int(part))
+        logging.info(
+            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
+        )
+        index += 1
+        try:
+            data_inm = get_model_param_by_inm(browser_inm, part)
+        except Exception as e:
+            logging.error(e)
+            error_file = StringIO()
+            traceback.print_exc(file=error_file)
+            details = error_file.getvalue()
+            file_name = f"{part}_{manufacturer}_{int(time.time())}"
+            with open(f"{file_name}.txt", "w") as f:
+                f.write(details)
+            browser_inm.get_screenshot_as_file(f"{file_name}_inm.png")
+            # 运行出现错误10次
+            if error_count >= 10:  # 遇到问题,直接停止
+                sys.exit(0)
+            else:
+                error_count += 1
+        else:
+            ingram_micro_price = data_inm.get("ingram_micro_price")
+            save_to_model_inm(part, ingram_micro_price)
+
+
 if __name__ == "__main__":
-    spider()
+    spider_inm()
