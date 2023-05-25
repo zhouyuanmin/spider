@@ -53,6 +53,8 @@ page_elements = {
     "description": '//div[@heading="Vendor Description"]/div',
     "gsa_advantage_price": '//table[@role="presentation"]/tbody//strong',
     "zip": '//input[@id="zip"]',
+    "search_msrp": '//*[@id="search-container"]//div[@class="css-j7qwjs"]',
+    "main_view": '//*[@id="main-view"]/div/div[1]/div/div[1]',
 }
 
 
@@ -182,6 +184,14 @@ def get_dollar(text):
         text = text.replace(",", "")  # 处理逗号
         dollar = float(text.strip("$"))
     return dollar
+
+
+def get_msrp(text):
+    _text = re.findall(r"\$[\d.]+", text)
+    if _text:
+        return get_dollar(_text[0])
+    logging.error(text)
+    return 0
 
 
 def get_num(text):
@@ -379,7 +389,36 @@ def get_model_param_by_gsa(browser, part):
 
 
 def get_model_param_by_inm(browser, part):
-    return {}
+    url = f"https://usa.ingrammicro.com/cep/app/product/productsearch?displaytitle={part}&keywords={part}&sortBy=relevance&page=1&rowsPerPage=8"
+    browser.get(url)
+    waiting_to_load(browser)
+
+    # 判断网页是否加载完成
+    main_view_divs = []
+    for i in range(3):
+        main_view_divs = browser.find_elements_by_xpath(page_elements.get("main_view"))
+        if main_view_divs:
+            break
+        else:
+            time.sleep(3)
+    if not main_view_divs:
+        logging.error(f"inm_{part}_load_page")
+        save_error_screenshot(browser, "inm", f"{part}_load_page")
+
+    search_msrp_divs = browser.find_elements_by_xpath(page_elements.get("search_msrp"))
+    if search_msrp_divs:
+        pass
+    else:
+        time.sleep(5)
+        search_msrp_divs = browser.find_elements_by_xpath(
+            page_elements.get("search_msrp")
+        )
+    if search_msrp_divs:
+        text = search_msrp_divs[0].text
+        ingram_micro_price = get_msrp(text)
+        return {"ingram_micro_price": ingram_micro_price}
+    else:
+        return {}
 
 
 def save_to_model(params):
