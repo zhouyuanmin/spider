@@ -436,7 +436,7 @@ def save_to_model_ec(params):
 
 
 def save_to_model_inm(part, ingram_micro_price):
-    objs = ECGood.objects.filter(part=part)
+    objs = Good.objects.filter(part=part)
     objs.update(ingram_micro_price=ingram_micro_price)
 
 
