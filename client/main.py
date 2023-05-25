@@ -520,8 +520,10 @@ def spider_ec():
 
 def spider_inm():
     browser_inm = create_browser()
-    begin = 1
-    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
+    begin = 570
+    data1 = get_data("productListsQuoteAll.xlsx", 570)
+    data2 = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", 1)
+    data = data1 + data2
     error_count = 0
     index = 1
     for part, manufacturer in data:
@@ -550,7 +552,7 @@ def spider_inm():
             else:
                 error_count += 1
         else:
-            ingram_micro_price = data_inm.get("ingram_micro_price")
+            ingram_micro_price = data_inm.get("ingram_micro_price", 0)
             save_to_model_inm(part, ingram_micro_price)
 
 
