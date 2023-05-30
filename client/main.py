@@ -187,7 +187,7 @@ def get_dollar(text):
 
 
 def get_msrp(text):
-    _text = re.findall(r"\$[\d.]+", text)
+    _text = re.findall(r"\$[\d.,]+", text)
     if _text:
         return get_dollar(_text[0])
     logging.error(text)
@@ -414,6 +414,7 @@ def get_model_param_by_inm(browser, part):
             page_elements.get("search_msrp")
         )
     if search_msrp_divs:
+        time.sleep(3)
         text = search_msrp_divs[0].text
         ingram_micro_price = get_msrp(text)
         return {"ingram_micro_price": ingram_micro_price}
@@ -520,14 +521,12 @@ def spider_ec():
 
 def spider_inm():
     browser_inm = create_browser()
-    begin = 570
-    data1 = get_data("productListsQuoteAll.xlsx", 570)
-    data2 = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", 1)
-    data = data1 + data2
+    begin = 0
+    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
     error_count = 0
     index = 1
     for part, manufacturer in data:
-        time.sleep(5)  # 基础是10秒每个
+        # time.sleep(5)  # 基础是10秒每个
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
@@ -545,7 +544,7 @@ def spider_inm():
             file_name = f"{part}_{manufacturer}_{int(time.time())}"
             with open(f"{file_name}.txt", "w") as f:
                 f.write(details)
-            browser_inm.get_screenshot_as_file(f"{file_name}_inm.png")
+            # browser_inm.get_screenshot_as_file(f"{file_name}_inm.png")
             # 运行出现错误10次
             if error_count >= 10:  # 遇到问题,直接停止
                 sys.exit(0)
