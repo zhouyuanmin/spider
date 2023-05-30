@@ -566,5 +566,39 @@ def spider_inm():
             save_to_model_inm(part, ingram_micro_price)
 
 
+def spider_coo():
+    browser = create_browser()
+    begin = 0
+    data = Good.objects.filter(id__gt=begin)
+    for obj in data:
+        logging.info(f"id={obj.pk}")
+        note = obj.note
+        if note:
+            url = json.loads(note).get("url")
+        else:
+            continue
+
+        browser.get(url)
+        waiting_to_load(browser)
+        description_divs = browser.find_elements_by_xpath(
+            page_elements.get("description")
+        )
+        if not description_divs:
+            waiting_to_load(browser)
+            time.sleep(10)
+            # 增加判断是否需要邮编,有则跳过
+            zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
+            if zip_div:
+                continue
+        coo = ""
+        divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
+        for div in divs:
+            text = div.text
+            if "Country of Origin" in text:
+                coo = text[18:].strip()
+        obj.coo = coo
+        obj.save()
+
+
 if __name__ == "__main__":
-    spider_inm()
+    spider_coo()
