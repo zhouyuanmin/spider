@@ -68,6 +68,9 @@ class Good(BaseModel):
     gsa_advantage_price_3 = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格3"
     )  # gsa网页上的
+    coo = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="原产地"
+    )  # gsa网页上的
 
 
 class ECGood(BaseModel):
