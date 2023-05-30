@@ -585,11 +585,13 @@ def spider_coo():
         )
         if not description_divs:
             waiting_to_load(browser)
-            time.sleep(10)
+            time.sleep(20)
             # 增加判断是否需要邮编,有则跳过
             zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
             if zip_div:
                 continue
+            browser.get(url)
+            waiting_to_load(browser)
         coo = ""
         divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
         for div in divs:
