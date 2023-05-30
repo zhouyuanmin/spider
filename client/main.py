@@ -55,6 +55,7 @@ page_elements = {
     "zip": '//input[@id="zip"]',
     "search_msrp": '//*[@id="search-container"]//div[@class="css-j7qwjs"]',
     "main_view": '//*[@id="main-view"]/div/div[1]/div/div[1]',
+    "coo_divs": '//*[@id="main"]//li',
 }
 
 
@@ -346,6 +347,15 @@ def get_model_param_by_gsa(browser, part):
                 zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
                 if zip_div:
                     continue
+
+            # 获取Country of Origin（coo）
+            coo = ""
+            divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
+            for div in divs:
+                text = div.text
+                if "Country of Origin" in text:
+                    coo = text[18:].strip()
+
             description_div = browser.find_element_by_xpath(
                 page_elements.get("description")
             )
@@ -380,6 +390,7 @@ def get_model_param_by_gsa(browser, part):
                 "gsa_advantage_price_1": gsa_advantage_prices[0],
                 "gsa_advantage_price_2": gsa_advantage_prices[1],
                 "gsa_advantage_price_3": gsa_advantage_prices[2],
+                "coo": coo,
             }
             gsa_data.append(item_data)
         return gsa_data
