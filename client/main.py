@@ -568,10 +568,12 @@ def spider_inm():
 
 def spider_coo():
     browser = create_browser()
-    begin = 0
+    begin = 1
     data = Good.objects.filter(id__gt=begin)
     for obj in data:
         logging.info(f"id={obj.pk}")
+        if obj.coo:  # 已经有了就不用爬取了
+            continue
         note = obj.note
         if note:
             url = json.loads(note).get("url")
@@ -580,18 +582,20 @@ def spider_coo():
 
         browser.get(url)
         waiting_to_load(browser)
+        time.sleep(3)
         description_divs = browser.find_elements_by_xpath(
             page_elements.get("description")
         )
         if not description_divs:
             waiting_to_load(browser)
-            time.sleep(20)
+            # time.sleep(20)
             # 增加判断是否需要邮编,有则跳过
             zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
             if zip_div:
                 continue
-            browser.get(url)
-            waiting_to_load(browser)
+            # browser.get(url)
+            # waiting_to_load(browser)
+            # time.sleep(3)
         coo = ""
         divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
         for div in divs:
