@@ -212,11 +212,11 @@ def save_error_screenshot(browser, sign, detail):
 
 
 # 业务逻辑函数
-def get_data(path, begin_line=0, count=None):
+def get_data(path, begin_line=0, count=None, part_line=1, manufacturer_line=2):
     excel_data = xlrd.open_workbook(filename=path)
     table = excel_data.sheets()[0]  # 第一个table
-    parts = table.col_values(1)[begin_line:]  # 第2列
-    manufacturers = table.col_values(2)[begin_line:]  # 第3列
+    parts = table.col_values(part_line)[begin_line:]  # 第2列
+    manufacturers = table.col_values(manufacturer_line)[begin_line:]  # 第3列
     zipped = zip(parts, manufacturers)
     zipped = list(zipped)
     if count:
@@ -606,5 +606,50 @@ def spider_coo():
         obj.save()
 
 
+def spider_gsa():
+    browser_gsa = create_browser()
+    begin = 1
+    data = get_data(
+        "PCI Brand Q2 GSA Dealer Pricing File 5-1-23TAAOnly爬虫加价格.xlsx",
+        begin,
+        part_line=2,
+        manufacturer_line=0,
+    )
+    error_count = 0
+    index = 1
+    for part, manufacturer in data:
+        # 处理float数
+        if isinstance(part, float):
+            part = str(int(part))
+        logging.info(
+            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
+        )
+        index += 1
+        try:
+            data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
+        except Exception as e:
+            logging.error(e)
+            error_file = StringIO()
+            traceback.print_exc(file=error_file)
+            details = error_file.getvalue()
+            file_name = f"{part}_{manufacturer}_{int(time.time())}"
+            with open(f"{file_name}.txt", "w") as f:
+                f.write(details)
+            browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
+            # 运行出现错误10次
+            if error_count >= 10:  # 遇到问题,直接停止
+                sys.exit(0)
+            else:
+                error_count += 1
+        else:
+            for data_gsa in data_gsa_list:
+                param_kvs = {
+                    "part": part,
+                    "manufacturer": manufacturer,
+                }
+                param_kvs.update(data_gsa)
+                save_to_model(param_kvs)
+
+
 if __name__ == "__main__":
-    spider_coo()
+    spider_gsa()
