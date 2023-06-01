@@ -224,6 +224,15 @@ def get_data(path, begin_line=0, count=None, part_line=1, manufacturer_line=2):
     return zipped
 
 
+def get_data_by_excel(path, begin_row, cols):
+    excel_data = xlrd.open_workbook(filename=path)
+    table = excel_data.sheets()[0]  # 第一个table
+    data = []
+    for i in cols:
+        data.append(table.col_values(i)[begin_row:])
+    return data
+
+
 def get_model_param_by_ec(browser, part):
     try:
         obj = ECGood.objects.get(part=part)
