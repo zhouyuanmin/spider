@@ -347,6 +347,11 @@ def get_model_param_by_gsa(browser, part):
                 zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
                 if zip_div:
                     continue
+            description_divs = browser.find_elements_by_xpath(
+                page_elements.get("description")
+            )
+            if not description_divs:
+                continue
 
             # 获取Country of Origin（coo）
             coo = ""
@@ -608,7 +613,7 @@ def spider_coo():
 
 def spider_gsa():
     browser_gsa = create_browser()
-    begin = 1
+    begin = 3420
     data = get_data(
         "PCI Brand Q2 GSA Dealer Pricing File 5-1-23TAAOnly爬虫加价格.xlsx",
         begin,
