@@ -2,6 +2,7 @@ from selenium.common import exceptions
 from selenium import webdriver
 from pathlib import Path
 from io import StringIO
+import xlsxwriter
 import traceback
 import logging
 import random
@@ -231,6 +232,19 @@ def get_data_by_excel(path, begin_row, cols):
     for i in cols:
         data.append(table.col_values(i)[begin_row:])
     return data
+
+
+def save_data_to_excel(path, data):
+    work_book = xlsxwriter.Workbook(path)
+    work_sheet = work_book.add_worksheet()
+    row = 0  # 表头从第行列开始写
+    for line in data:
+        col = 0
+        for value in line:
+            work_sheet.write(row, col, value)
+            col += 1
+        row += 1
+    work_book.close()
 
 
 def get_model_param_by_ec(browser, part):
@@ -665,5 +679,22 @@ def spider_gsa():
                 save_to_model(param_kvs)
 
 
+def data_handling():
+    data = []
+    path = "/Users/myard/Desktop/spider/client/PCI Brand Q2 GSA Dealer Pricing File 5-1-23TAAOnly爬虫加价格.xlsx"
+    raw_data = get_data_by_excel(path, 1, cols=[2])
+    parts = raw_data[0]
+    for part in parts:
+        raw = [part, 0, 0, 0]
+        goods = Good.objects.filter(part=part)
+        if goods:
+            good = goods[0]
+            raw[1] = good.gsa_advantage_price_1
+            raw[2] = good.gsa_advantage_price_2
+            raw[3] = good.gsa_advantage_price_3
+        data.append(raw)
+    save_data_to_excel("1.xlsx", data)
+
+
 if __name__ == "__main__":
-    spider_gsa()
+    data_handling()
