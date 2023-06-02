@@ -274,7 +274,7 @@ def get_model_param_by_ec(browser, part):
         if msrp_divs:
             msrp = get_dollar(msrp_divs[0].text)
         else:
-            save_error_screenshot(browser, "ec", f"{part}_msrp")
+            # save_error_screenshot(browser, "ec", f"{part}_msrp")
             msrp = 0
 
         federal_govt_spa_divs = browser.find_elements_by_xpath(
@@ -484,8 +484,8 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin = 1
-    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
+    begin = 33
+    data = get_data("Faheem2爬虫加价格.xlsx", begin, part_line=1, manufacturer_line=0)
     error_count = 0
     index = 1
     for part, manufacturer in data:
