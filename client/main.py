@@ -483,12 +483,13 @@ def save_to_model_inm(part, ingram_micro_price):
 def spider():
     browser_ec = login()
     browser_gsa = create_browser()
+    browser_inm = create_browser()
     begin = 1
     data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
     error_count = 0
     index = 1
     for part, manufacturer in data:
-        time.sleep(5)  # 基础是10秒每个
+        # time.sleep(5)  # 基础是10秒每个
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
@@ -499,6 +500,7 @@ def spider():
         try:
             data_ec = get_model_param_by_ec(browser_ec, part)
             data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
+            data_inm = get_model_param_by_inm(browser_inm, part)
         except Exception as e:
             logging.error(e)
             error_file = StringIO()
@@ -522,6 +524,7 @@ def spider():
                 }
                 param_kvs.update(data_ec)
                 param_kvs.update(data_gsa)
+                param_kvs.update(data_inm)
                 save_to_model(param_kvs)
 
 
@@ -697,4 +700,4 @@ def data_handling():
 
 
 if __name__ == "__main__":
-    data_handling()
+    spider()
