@@ -350,9 +350,13 @@ def get_model_param_by_gsa(browser, part):
             )
             mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
             if source >= gsa_source_level:
-                valid_source_urls.append([source, url, product_name, manufacturer_name, mfr_part_no_gsa])
+                valid_source_urls.append(
+                    [source, url, product_name, manufacturer_name, mfr_part_no_gsa]
+                )
             elif not first_source_urls:
-                first_source_urls.append([source, url, product_name, manufacturer_name, mfr_part_no_gsa])
+                first_source_urls.append(
+                    [source, url, product_name, manufacturer_name, mfr_part_no_gsa]
+                )
         # 排序,取前3
         valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
         if len(valid_source_urls) > 3:
@@ -363,7 +367,13 @@ def get_model_param_by_gsa(browser, part):
 
         gsa_data = []
         # 到详细页采集数据
-        for source, url, product_name, manufacturer_name, mfr_part_no_gsa in valid_source_urls:
+        for (
+            source,
+            url,
+            product_name,
+            manufacturer_name,
+            mfr_part_no_gsa,
+        ) in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
 
@@ -504,17 +514,23 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin = 1
-    data = get_data("Faheem2爬虫加价格.xlsx", begin, part_line=1, manufacturer_line=0)
+    begin_row = 4
+    data = get_data_by_excel(
+        "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
+        begin_row=begin_row,
+        cols=[1, 0],
+    )
+    parts = data[0]
+    manufacturers = data[1]
     error_count = 0
     index = 1
-    for part, manufacturer in data:
+    for part, manufacturer in zip(parts, manufacturers):
         # time.sleep(5)  # 基础是10秒每个
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
         logging.info(
-            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
+            f"index={index}:{index + begin_row},part:{part},manufacturer:{manufacturer}"
         )
         index += 1
         try:
@@ -537,15 +553,25 @@ def spider():
             else:
                 error_count += 1
         else:
-            for data_gsa in data_gsa_list:
-                param_kvs = {
+            # 存储数据 ECGood
+            data_ec.update(
+                {
                     "part": part,
                     "manufacturer": manufacturer,
                 }
-                param_kvs.update(data_ec)
+            )
+            data_ec.update(data_inm)
+            ec_good = ECGood(**data_ec)
+            ec_good.save()
+
+            # 存储数据 GSAGood
+            for data_gsa in data_gsa_list:
+                param_kvs = {
+                    "part": part,
+                }
                 param_kvs.update(data_gsa)
-                param_kvs.update(data_inm)
-                save_to_model(param_kvs)
+                gsa_good = GSAGood(**data_gsa)
+                gsa_good.save()
 
 
 def spider_ec():
@@ -743,4 +769,4 @@ def ec_old2new():
 
 
 if __name__ == "__main__":
-    ec_old2new()
+    spider()
