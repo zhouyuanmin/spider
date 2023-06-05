@@ -17,7 +17,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-from goods.models import Good, ECGood
+from goods.models import Good, ECGood, GSAGood
 
 # 日志配置
 logging.basicConfig(
@@ -704,5 +704,28 @@ def data_handling():
     save_data_to_excel("1.xlsx", data)
 
 
+def ec_old2new():
+    objs = Good.objects.all()
+    for obj in objs:
+        if ECGood.objects.filter(part=obj.part).exists():
+            logging.warning(f"{obj.pk}")
+            continue
+        else:
+            logging.info(f"{obj.pk}")
+            ec_obj = ECGood()
+            ec_obj.part = obj.part
+            ec_obj.manufacturer = obj.manufacturer
+            ec_obj.mfr_part_no = obj.mfr_part_no
+            ec_obj.vendor_part_no = obj.vendor_part_no
+            ec_obj.msrp = obj.msrp
+            ec_obj.federal_govt_spa = obj.federal_govt_spa
+            ec_obj.ingram_micro_price = obj.ingram_micro_price
+            if obj.federal_govt_spa:
+                ec_obj.ec_status = True
+            if obj.ingram_micro_price:
+                ec_obj.inm_status = True
+            ec_obj.save()
+
+
 if __name__ == "__main__":
-    spider()
+    ec_old2new()
