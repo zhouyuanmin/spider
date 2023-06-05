@@ -259,6 +259,11 @@ def get_model_param_by_ec(browser, part):
     except ECGood.DoesNotExist:
         # logging.warning(f"part={part},不存在")
         pass
+    # 判断是否需要登陆
+    login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
+    if login_buttons:
+        logging.error("重新登陆")
+        sys.exit(0)
     # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
     url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
     browser.get(url)
@@ -484,7 +489,7 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin = 33
+    begin = 1
     data = get_data("Faheem2爬虫加价格.xlsx", begin, part_line=1, manufacturer_line=0)
     error_count = 0
     index = 1
