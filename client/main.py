@@ -554,15 +554,24 @@ def spider():
                 error_count += 1
         else:
             # 存储数据 ECGood
-            data_ec.update(
-                {
-                    "part": part,
-                    "manufacturer": manufacturer,
-                }
-            )
-            data_ec.update(data_inm)
-            ec_good = ECGood(**data_ec)
-            ec_good.save()
+            if data_ec:
+                data_ec.update(
+                    {
+                        "part": part,
+                        "manufacturer": manufacturer,
+                    }
+                )
+                data_ec.update(data_inm)
+                ec_good = ECGood(**data_ec)
+                ec_good.ec_status = True
+                if data_inm:
+                    ec_good.inm_status = True
+                ec_good.save()
+            elif data_inm:
+                obj = ECGood.objects.get(part=part)
+                obj.ingram_micro_price = data_inm.get("ingram_micro_price", 0)
+                obj.inm_status = True
+                obj.save()
 
             # 存储数据 GSAGood
             for data_gsa in data_gsa_list:
