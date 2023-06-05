@@ -315,9 +315,18 @@ def get_model_param_by_ec(browser, part):
 
 
 def get_model_param_by_gsa(browser, part):
+    try:
+        obj = GSAGood.objects.get(part=part)
+        return {}  # 存在则不需要再爬取
+    except GSAGood.DoesNotExist:
+        logging.warning(f"part={part},不存在,需要爬取数据")
+        # time.sleep(5)
+    except Exception:
+        return {}  # 存在则不需要再爬取
     # 搜索
     url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{part}&db=0&searchType=0"
     browser.get(url)
+    time.sleep(5)
     waiting_to_load(browser)
 
     product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
@@ -515,7 +524,7 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin_row = 263
+    begin_row = 1
     data = get_data_by_excel(
         "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
         begin_row=begin_row,
@@ -526,7 +535,7 @@ def spider():
     error_count = 0
     index = 1
     for part, manufacturer in zip(parts, manufacturers):
-        # time.sleep(5)  # 基础是10秒每个
+        # time.sleep(10)  # 基础是10秒每个
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
@@ -546,8 +555,6 @@ def spider():
             file_name = f"{part}_{manufacturer}_{int(time.time())}"
             with open(f"{file_name}.txt", "w") as f:
                 f.write(details)
-            browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
-            browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
             # 运行出现错误10次
             if error_count >= 10:  # 遇到问题,直接停止
                 sys.exit(0)
@@ -781,5 +788,64 @@ def ec_old2new():
             ec_obj.save()
 
 
+def export(path, begin_row, begin_col, end_col, part_col):
+    cols = list(range(begin_col, end_col + 1))
+    excel_data = get_data_by_excel(path, begin_row, cols)
+    parts = excel_data[part_col]
+    data = []
+    for i, part in enumerate(parts):
+        if isinstance(part, float):
+            part = str(int(part))
+        row_data = []
+        for item in excel_data:
+            row_data.append(item[i])
+        if i == 0:
+            row_data.extend(
+                [
+                    "part",
+                    "manufacturer",
+                    "mfr_part_no",
+                    "vendor_part_no",
+                    "msrp",
+                    "federal_govt_spa",
+                    "ingram_micro_price",
+                    # gsa
+                    "manufacturer_name",
+                    "product_name",
+                    "product_description",
+                    "product_description2_strong",
+                    "product_description2",
+                    "gsa_advantage_price_1",
+                    "gsa_advantage_price_2",
+                    "gsa_advantage_price_3",
+                    "coo",
+                    "mfr_part_no_gsa",
+                    "url",
+                    "source",
+                ]
+            )
+            data.append(row_data)
+            continue
+        # 处理数据
+        ec_obj = ECGood.objects.get(part=part)
+        if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
+            continue
+        gsa_objs = GSAGood.objects.filter(part=part)
+        for gsa_obj in gsa_objs:
+            _row_data = []
+            _row_data.extend(row_data)
+            gsa_advantage_price_2 = gsa_obj.gsa_advantage_price_2
+            # 判断数值是否合理
+            if (
+                ec_obj.federal_govt_spa
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                pass
+    save_data_to_excel("1.xlsx", data)
+
+
 if __name__ == "__main__":
     spider()
+    # export("/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx", 3, 0, 9, 1)
