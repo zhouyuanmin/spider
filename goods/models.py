@@ -115,6 +115,9 @@ class GSAGood(BaseModel):
     product_description = models.CharField(
         max_length=255, blank=True, default="", verbose_name="产品描述"
     )  # gsa网页上的
+    product_description2_strong = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="产品描述strong"
+    )  # gsa网页上的
     product_description2 = models.CharField(
         max_length=255, blank=True, default="", verbose_name="产品描述2"
     )  # gsa网页上的

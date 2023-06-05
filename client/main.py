@@ -50,7 +50,9 @@ page_elements = {
     "sources": './/span[@align="left"]',
     "item_a": './/div[@class="itemName"]/a',
     "mfr_name": './/div[@class="mfrName"]',
+    "mfr_part_no_gsa": './/div[@class="mfrPartNumber"]',
     "product_description": '//div[@heading="Product Description"]/div',
+    "description_strong": '//div[@heading="Vendor Description"]/strong',
     "description": '//div[@heading="Vendor Description"]/div',
     "gsa_advantage_price": '//table[@role="presentation"]/tbody//strong',
     "zip": '//input[@id="zip"]',
@@ -250,14 +252,9 @@ def save_data_to_excel(path, data):
 def get_model_param_by_ec(browser, part):
     try:
         obj = ECGood.objects.get(part=part)
-        return {
-            "mfr_part_no": obj.mfr_part_no,
-            "vendor_part_no": obj.vendor_part_no,
-            "msrp": obj.msrp,
-            "federal_govt_spa": obj.federal_govt_spa,
-        }
+        return {}  # 存在则不需要再爬取
     except ECGood.DoesNotExist:
-        # logging.warning(f"part={part},不存在")
+        logging.warning(f"part={part},不存在,需要爬取数据")
         pass
     # 判断是否需要登陆
     login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
@@ -347,10 +344,15 @@ def get_model_param_by_gsa(browser, part):
                 page_elements.get("mfr_name")
             )
             manufacturer_name = mfr_name_div.text[4:].strip()
+            # mfr_part_no_gsa字段
+            mfr_part_no_gsa_div = product_div.find_element_by_xpath(
+                page_elements.get("mfr_part_no_gsa")
+            )
+            mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
             if source >= gsa_source_level:
-                valid_source_urls.append([source, url, product_name, manufacturer_name])
+                valid_source_urls.append([source, url, product_name, manufacturer_name, mfr_part_no_gsa])
             elif not first_source_urls:
-                first_source_urls.append([source, url, product_name, manufacturer_name])
+                first_source_urls.append([source, url, product_name, manufacturer_name, mfr_part_no_gsa])
         # 排序,取前3
         valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
         if len(valid_source_urls) > 3:
@@ -361,7 +363,7 @@ def get_model_param_by_gsa(browser, part):
 
         gsa_data = []
         # 到详细页采集数据
-        for source, url, product_name, manufacturer_name in valid_source_urls:
+        for source, url, product_name, manufacturer_name, mfr_part_no_gsa in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
 
@@ -402,8 +404,18 @@ def get_model_param_by_gsa(browser, part):
                 _product_description = _description_divs[0].text
             else:
                 _product_description = ""
+            product_description2 = _product_description
+
+            _description_divs_strong = browser.find_elements_by_xpath(
+                page_elements.get("description_strong")
+            )
+            if _description_divs_strong:
+                product_description2_strong = _description_divs_strong[0].text
+            else:
+                product_description2_strong = ""
+
             waiting_to_load(browser)
-            product_description = _product_description + description_div.text
+            product_description = description_div.text
             gsa_advantage_price_divs = browser.find_elements_by_xpath(
                 page_elements.get("gsa_advantage_price")
             )[1:]
@@ -415,15 +427,18 @@ def get_model_param_by_gsa(browser, part):
                 if "$" in text:
                     gsa_advantage_prices[i] = get_dollar(text)
             item_data = {
-                "source": source,
-                "url": url,
-                "product_name": product_name,
                 "manufacturer_name": manufacturer_name,
+                "product_name": product_name,
                 "product_description": product_description,
+                "product_description2_strong": product_description2_strong,
+                "product_description2": product_description2,
                 "gsa_advantage_price_1": gsa_advantage_prices[0],
                 "gsa_advantage_price_2": gsa_advantage_prices[1],
                 "gsa_advantage_price_3": gsa_advantage_prices[2],
                 "coo": coo,
+                "mfr_part_no_gsa": mfr_part_no_gsa,
+                "url": url,
+                "source": source,
             }
             gsa_data.append(item_data)
         return gsa_data
