@@ -822,30 +822,91 @@ def export(path, begin_row, begin_col, end_col, part_col):
                     "mfr_part_no_gsa",
                     "url",
                     "source",
+                    "min_price",
+                    "description",
                 ]
             )
             data.append(row_data)
             continue
         # 处理数据
-        ec_obj = ECGood.objects.get(part=part)
+        ec_objs = ECGood.objects.filter(part=part)
+        if ec_objs:
+            ec_obj = ec_objs[0]
+        else:
+            continue
         if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
             continue
         gsa_objs = GSAGood.objects.filter(part=part)
         for gsa_obj in gsa_objs:
             _row_data = []
             _row_data.extend(row_data)
-            gsa_advantage_price_2 = gsa_obj.gsa_advantage_price_2
+            gsa_advantage_price_2 = float(gsa_obj.gsa_advantage_price_2)
             # 判断数值是否合理
+            min_price = 0
             if (
                 ec_obj.federal_govt_spa
                 and 0.5 * gsa_advantage_price_2
                 <= ec_obj.federal_govt_spa
                 <= 1.5 * gsa_advantage_price_2
             ):
-                pass
+                min_price = ec_obj.federal_govt_spa
+            if (
+                ec_obj.ingram_micro_price
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                if min_price == 0:
+                    min_price = ec_obj.ingram_micro_price
+                else:
+                    min_price = min(min_price, ec_obj.ingram_micro_price)
+            if min_price:  # 数据合理
+                # 处理描述
+                description = ""
+                if gsa_obj.product_description:
+                    description = gsa_obj.product_description
+                elif gsa_obj.product_description2:
+                    description = gsa_obj.product_description2
+                    if gsa_obj.product_description2_strong:
+                        strong = (
+                            gsa_obj.product_description2_strong.split("by")[-1]
+                            .strip()
+                            .strip(".")
+                        )
+                        description = description.replace(strong, "TechFocus LLC")
+                    if "For further" in description:
+                        description = description.split("For further")[0]
+                    description += "For further information contact TechFocus at 304-906-8124 Or email lwang@techfocusUSA.com"
+                else:
+                    description = ""
+                # 加数据
+                _row_data.append(ec_obj.part)
+                _row_data.append(ec_obj.manufacturer)
+                _row_data.append(ec_obj.mfr_part_no)
+                _row_data.append(ec_obj.vendor_part_no)
+                _row_data.append(ec_obj.msrp)
+                _row_data.append(ec_obj.federal_govt_spa)
+                _row_data.append(ec_obj.ingram_micro_price)
+
+                _row_data.append(gsa_obj.manufacturer_name)
+                _row_data.append(gsa_obj.product_name)
+                _row_data.append(gsa_obj.product_description)
+                _row_data.append(gsa_obj.product_description2_strong)
+                _row_data.append(gsa_obj.product_description2)
+                _row_data.append(gsa_obj.gsa_advantage_price_1)
+                _row_data.append(gsa_obj.gsa_advantage_price_2)
+                _row_data.append(gsa_obj.gsa_advantage_price_3)
+                _row_data.append(gsa_obj.coo)
+                _row_data.append(gsa_obj.mfr_part_no_gsa)
+                _row_data.append(gsa_obj.url)
+                _row_data.append(gsa_obj.source)
+                _row_data.append(min_price)
+                _row_data.append(description)
+                data.append(_row_data)
+
     save_data_to_excel("1.xlsx", data)
 
 
 if __name__ == "__main__":
-    spider()
-    # export("/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx", 3, 0, 9, 1)
+    # spider()
+    export("/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx", 3, 0, 9, 1)
