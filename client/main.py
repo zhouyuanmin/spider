@@ -194,7 +194,7 @@ def get_msrp(text):
     _text = re.findall(r"\$[\d.,]+", text)
     if _text:
         return get_dollar(_text[0])
-    logging.error(text)
+    # logging.error(text)
     return 0
 
 
@@ -208,6 +208,7 @@ def get_num(text):
 
 
 def save_error_screenshot(browser, sign, detail):
+    return
     time_str = str(int(time.time() * 1000))
     file_name = f"{sign}_{time_str}_{detail}.png"
     file_name = os.path.join(base_dir, "error", file_name)
@@ -514,7 +515,7 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin_row = 4
+    begin_row = 263
     data = get_data_by_excel(
         "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
         begin_row=begin_row,
@@ -568,17 +569,20 @@ def spider():
                     ec_good.inm_status = True
                 ec_good.save()
             elif data_inm:
-                obj = ECGood.objects.get(part=part)
-                obj.ingram_micro_price = data_inm.get("ingram_micro_price", 0)
-                obj.inm_status = True
-                obj.save()
+                try:
+                    obj = ECGood.objects.get(part=part)
+                    obj.ingram_micro_price = data_inm.get("ingram_micro_price", 0)
+                    obj.inm_status = True
+                    obj.save()
+                except ECGood.DoesNotExist:
+                    pass
 
             # 存储数据 GSAGood
             for data_gsa in data_gsa_list:
                 param_kvs = {
                     "part": part,
                 }
-                param_kvs.update(data_gsa)
+                data_gsa.update(param_kvs)
                 gsa_good = GSAGood(**data_gsa)
                 gsa_good.save()
 
