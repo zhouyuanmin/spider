@@ -71,12 +71,15 @@ class Good(BaseModel):
     coo = models.CharField(
         max_length=255, blank=True, default="", verbose_name="原产地"
     )  # gsa网页上的
+    mfr_part_no_gsa = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="制造商零件号"
+    )  # gsa网页上的
 
 
 class ECGood(BaseModel):
     part = models.CharField(
         max_length=255, blank=True, default="", verbose_name="零件号"
-    )  # excel的
+    )  # excel的唯一值
     manufacturer = models.CharField(
         max_length=255, blank=True, default="", verbose_name="制造商"
     )  # excel的
@@ -92,3 +95,44 @@ class ECGood(BaseModel):
     federal_govt_spa = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="联邦政府价格"
     )  # ec网页上的
+    ingram_micro_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="英迈国际价格"
+    )  # ingram网页上的
+    ec_status = models.BooleanField(null=True, verbose_name="EC爬取状态")
+    inm_status = models.BooleanField(null=True, verbose_name="inm爬取状态")
+
+
+class GSAGood(BaseModel):
+    part = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="零件号"
+    )  # excel的唯一值
+    manufacturer_name = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="制造商名称"
+    )  # gsa网页上的
+    product_name = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="产品名称"
+    )  # gsa网页上的
+    product_description = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="产品描述"
+    )  # gsa网页上的
+    product_description2 = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="产品描述2"
+    )  # gsa网页上的
+    gsa_advantage_price_1 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格1"
+    )  # gsa网页上的
+    gsa_advantage_price_2 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格2"
+    )  # gsa网页上的
+    gsa_advantage_price_3 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格3"
+    )  # gsa网页上的
+    coo = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="原产地"
+    )  # gsa网页上的
+    mfr_part_no_gsa = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="制造商零件号"
+    )  # gsa网页上的
+    gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
+    url = models.CharField(max_length=255, blank=True, default="", verbose_name="url")
+    source = models.IntegerField(verbose_name="source")
