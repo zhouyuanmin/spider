@@ -208,7 +208,6 @@ def get_num(text):
 
 
 def save_error_screenshot(browser, sign, detail):
-    return
     time_str = str(int(time.time() * 1000))
     file_name = f"{sign}_{time_str}_{detail}.png"
     file_name = os.path.join(base_dir, "error", file_name)
@@ -562,10 +561,12 @@ def save_to_model_inm(part, ingram_micro_price):
 
 
 def spider():
+    # 浏览器准备
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin_row = 149
+    # 数据准备
+    begin_row = 1
     data = get_data_by_excel(
         "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
         begin_row=begin_row,
@@ -573,19 +574,15 @@ def spider():
     )
     parts = data[0]
     manufacturers = data[1]
-    error_count = 0
     index = 1
-    for part, manufacturer in zip(parts, manufacturers):
-        # time.sleep(10)  # 基础是10秒每个
+    for i, part in enumerate(parts):
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
-        logging.info(
-            f"index={index}:{index + begin_row},part:{part},manufacturer:{manufacturer}"
-        )
+        logging.info(f"index={index}:{index + begin_row},part:{part}")
         index += 1
         try:
-            data_ec = get_model_param_by_ec(browser_ec, part)
+            data_ec = get_model_param_by_ec(browser_ec, part, manufacturers[i])
             data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
             data_inm = get_model_param_by_inm(browser_inm, part)
         except Exception as e:
@@ -593,46 +590,10 @@ def spider():
             error_file = StringIO()
             traceback.print_exc(file=error_file)
             details = error_file.getvalue()
-            file_name = f"{part}_{manufacturer}_{int(time.time())}"
+            file_name = f"{part}_{int(time.time())}"
             with open(f"{file_name}.txt", "w") as f:
                 f.write(details)
-            # 运行出现错误10次
-            if error_count >= 10:  # 遇到问题,直接停止
-                sys.exit(0)
-            else:
-                error_count += 1
-        else:
-            # 存储数据 ECGood
-            if data_ec:
-                data_ec.update(
-                    {
-                        "part": part,
-                        "manufacturer": manufacturer,
-                    }
-                )
-                data_ec.update(data_inm)
-                ec_good = ECGood(**data_ec)
-                ec_good.ec_status = True
-                if data_inm:
-                    ec_good.inm_status = True
-                ec_good.save()
-            elif data_inm:
-                try:
-                    obj = ECGood.objects.get(part=part)
-                    obj.ingram_micro_price = data_inm.get("ingram_micro_price", 0)
-                    obj.inm_status = True
-                    obj.save()
-                except ECGood.DoesNotExist:
-                    pass
-
-            # 存储数据 GSAGood
-            for data_gsa in data_gsa_list:
-                param_kvs = {
-                    "part": part,
-                }
-                data_gsa.update(param_kvs)
-                gsa_good = GSAGood(**data_gsa)
-                gsa_good.save()
+            sys.exit(0)
 
 
 def ec_old2new():
