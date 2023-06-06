@@ -250,12 +250,19 @@ def save_data_to_excel(path, data):
     work_book.close()
 
 
-def get_model_param_by_ec(browser, part):
+def get_model_param_by_ec(browser, part, manufacturer):
+    """自带更新操作"""
     try:
         obj = ECGood.objects.get(part=part)
-        return {}  # 存在则不需要再爬取
+        if obj.ec_status:
+            return
+        if obj.federal_govt_spa or obj.msrp:
+            obj.ec_status = True
+            return
+        # return {}  # 存在则不需要再爬取
+        logging.warning(f"EC:part={part},存在,需要更新数据")
     except ECGood.DoesNotExist:
-        logging.warning(f"part={part},不存在,需要爬取数据")
+        logging.warning(f"EC:part={part},不存在,需要爬取数据")
         pass
     # 判断是否需要登陆
     login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
@@ -303,6 +310,27 @@ def get_model_param_by_ec(browser, part):
             save_error_screenshot(browser, "ec", f"{part}_mfr_part_no")
             mfr_part_no = ""
         vendor_part_no = mfr_part_no
+        # 直接处理
+        try:
+            obj = ECGood.objects.get(part=part)
+        except ECGood.DoesNotExist:
+            obj = ECGood(
+                part=part,
+                manufacturer=manufacturer,
+                mfr_part_no=mfr_part_no,
+                vendor_part_no=vendor_part_no,
+                msrp=msrp,
+                federal_govt_spa=federal_govt_spa,
+            )
+            obj.save()
+        except:
+            pass
+        else:
+            obj.mfr_part_no = mfr_part_no
+            obj.vendor_part_no = vendor_part_no
+            obj.msrp = msrp
+            obj.federal_govt_spa = federal_govt_spa
+            obj.save()
         return {
             "mfr_part_no": mfr_part_no,
             "vendor_part_no": vendor_part_no,
