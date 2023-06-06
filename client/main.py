@@ -258,6 +258,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
             return
         if obj.federal_govt_spa or obj.msrp:
             obj.ec_status = True
+            obj.save()
             return
         # return {}  # 存在则不需要再爬取
         logging.warning(f"EC:part={part},存在,需要更新数据")
@@ -496,7 +497,18 @@ def get_model_param_by_gsa(browser, part):
 
 
 def get_model_param_by_inm(browser, part):
-    return {}
+    try:
+        obj = ECGood.objects.get(part=part)
+        if obj.inm_status:
+            return
+        if obj.ingram_micro_price:
+            obj.inm_status = True
+            obj.save()
+            return
+        logging.warning(f"INM:part={part},存在,需要更新数据")
+    except ECGood.DoesNotExist:
+        logging.warning(f"INM:part={part},不存在,需要爬取数据")
+        pass
     url = f"https://usa.ingrammicro.com/cep/app/product/productsearch?displaytitle={part}&keywords={part}&sortBy=relevance&page=1&rowsPerPage=8"
     browser.get(url)
     waiting_to_load(browser)
