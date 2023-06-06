@@ -42,6 +42,7 @@ page_elements = {
     # "product_keywords": '//*[@id="searchText"]',
     # "part_search_button": '//*[@id="partSearchBtn"]',
     "product_items": '//*[@id="searchResultTbody"]/tr',
+    "tbody": '//*[@id="resultList"]//tbody',
     # "product_href": '//*[@id="searchResultTbody"]/tr[1]/td/strong/a',
     "msrp": '//*[@class="msrp"]/span',
     "price_info": '//*[@class="price-info"]/a',
@@ -321,6 +322,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
                 vendor_part_no=vendor_part_no,
                 msrp=msrp,
                 federal_govt_spa=federal_govt_spa,
+                ec_status=True,
             )
             obj.save()
         except:
@@ -330,6 +332,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
             obj.vendor_part_no = vendor_part_no
             obj.msrp = msrp
             obj.federal_govt_spa = federal_govt_spa
+            obj.ec_status = True
             obj.save()
         return {
             "mfr_part_no": mfr_part_no,
@@ -339,7 +342,21 @@ def get_model_param_by_ec(browser, part, manufacturer):
         }
     else:
         # 无产品
-        return {}
+        tbody = browser.find_elements_by_xpath(page_elements.get("tbody"))
+        if tbody:  # 页面正常
+            text = tbody[0].text
+            if "Your search found no result." in text:
+                try:
+                    obj = ECGood.objects.get_or_create(part=part)
+                    obj.manufacturer = manufacturer
+                    obj.ec_status = True
+                    obj.save()
+                except ECGood.DoesNotExist:
+                    pass
+                except:
+                    pass
+        else:  # 页面异常
+            return {}
 
 
 def get_model_param_by_gsa(browser, part):
