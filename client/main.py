@@ -566,7 +566,7 @@ def spider():
     browser_gsa = create_browser()
     browser_inm = create_browser()
     # 数据准备
-    begin_row = 1
+    begin_row = 4
     data = get_data_by_excel(
         "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
         begin_row=begin_row,
@@ -574,13 +574,11 @@ def spider():
     )
     parts = data[0]
     manufacturers = data[1]
-    index = 1
     for i, part in enumerate(parts):
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
-        logging.info(f"index={index}:{index + begin_row},part:{part}")
-        index += 1
+        logging.info(f"index={i}:{i + begin_row},part:{part}")
         try:
             data_ec = get_model_param_by_ec(browser_ec, part, manufacturers[i])
             data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
@@ -739,5 +737,5 @@ def export(path, begin_row, begin_col, end_col, part_col):
 
 
 if __name__ == "__main__":
-    # spider()
+    spider()
     export("/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx", 3, 0, 9, 1)
