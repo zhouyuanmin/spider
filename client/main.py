@@ -47,6 +47,7 @@ page_elements = {
     "msrp": '//*[@class="msrp"]/span',
     "price_info": '//*[@class="price-info"]/a',
     "mfr_part_no": '//*[@id="searchResultTbody"]//tbody/tr[1]/td[1]/span',
+    "search": '//*[@id="globalSearch"]',
     "product_list": '//*[@class="productListControl isList"]/app-ux-product-display-inline',
     "sources": './/span[@align="left"]',
     "item_a": './/div[@class="itemName"]/a',
@@ -347,7 +348,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
             text = tbody[0].text
             if "Your search found no result." in text:
                 try:
-                    obj = ECGood.objects.get_or_create(part=part)
+                    obj, _ = ECGood.objects.get_or_create(part=part)
                     obj.manufacturer = manufacturer
                     obj.ec_status = True
                     obj.save()
@@ -360,14 +361,11 @@ def get_model_param_by_ec(browser, part, manufacturer):
 
 
 def get_model_param_by_gsa(browser, part):
-    try:
-        obj = GSAGood.objects.get(part=part)
+    objs = GSAGood.objects.filter(part=part)
+    if objs:
         return {}  # 存在则不需要再爬取
-    except GSAGood.DoesNotExist:
+    else:
         logging.warning(f"part={part},不存在,需要爬取数据")
-        # time.sleep(5)
-    except Exception:
-        return {}  # 存在则不需要再爬取
     # 搜索
     url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{part}&db=0&searchType=0"
     browser.get(url)
@@ -378,8 +376,16 @@ def get_model_param_by_gsa(browser, part):
     if product_divs:
         pass
     else:
-        time.sleep(5)
-        product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
+        # 判断页面是否加载完成
+        search_divs = browser.find_elements_by_xpath(page_elements.get("search"))
+        if search_divs:
+            product_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_list")
+            )
+            if not product_divs:
+                return {}
+        else:
+            return {}
 
     if product_divs:
         valid_source_urls = []
@@ -492,6 +498,7 @@ def get_model_param_by_gsa(browser, part):
                 if "$" in text:
                     gsa_advantage_prices[i] = get_dollar(text)
             item_data = {
+                "part": part,
                 "manufacturer_name": manufacturer_name,
                 "product_name": product_name,
                 "product_description": product_description,
@@ -505,6 +512,9 @@ def get_model_param_by_gsa(browser, part):
                 "url": url,
                 "source": source,
             }
+            # 直接存储
+            obj = GSAGood(**item_data)
+            obj.save()
             gsa_data.append(item_data)
         return gsa_data
     else:
