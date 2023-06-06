@@ -468,6 +468,7 @@ def get_model_param_by_gsa(browser, part):
 
 
 def get_model_param_by_inm(browser, part):
+    return {}
     url = f"https://usa.ingrammicro.com/cep/app/product/productsearch?displaytitle={part}&keywords={part}&sortBy=relevance&page=1&rowsPerPage=8"
     browser.get(url)
     waiting_to_load(browser)
@@ -524,7 +525,7 @@ def spider():
     browser_ec = login()
     browser_gsa = create_browser()
     browser_inm = create_browser()
-    begin_row = 1
+    begin_row = 149
     data = get_data_by_excel(
         "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
         begin_row=begin_row,
@@ -592,177 +593,6 @@ def spider():
                 data_gsa.update(param_kvs)
                 gsa_good = GSAGood(**data_gsa)
                 gsa_good.save()
-
-
-def spider_ec():
-    browser_ec = login()
-    data = get_data("productListsQuoteAll.xlsx")
-    error_count = 0
-    index = 1
-    for part, manufacturer in data:
-        print(f"index:{index},part:{part},manufacturer:{manufacturer}")
-        index += 1
-        try:
-            data_ec = get_model_param_by_ec(browser_ec, part)
-        except Exception as e:
-            logging.error(e)
-            error_file = StringIO()
-            traceback.print_exc(file=error_file)
-            details = error_file.getvalue()
-            file_name = f"{part}_{manufacturer}_{int(time.time())}"
-            with open(f"{file_name}.txt", "w") as f:
-                f.write(details)
-            browser_ec.get_screenshot_as_file(f"{file_name}_ec.png")
-            # 运行出现错误10次
-            if error_count >= 0:  # 遇到问题,直接停止
-                sys.exit(0)
-            else:
-                error_count += 1
-        else:
-            param_kvs = {
-                "part": part,
-                "manufacturer": manufacturer,
-            }
-            param_kvs.update(data_ec)
-            save_to_model_ec(param_kvs)
-
-
-def spider_inm():
-    browser_inm = create_browser()
-    begin = 0
-    data = get_data("33411HistoricalSaleSelectedUniqueAllPricesNeeded.xlsx", begin)
-    error_count = 0
-    index = 1
-    for part, manufacturer in data:
-        # time.sleep(5)  # 基础是10秒每个
-        # 处理float数
-        if isinstance(part, float):
-            part = str(int(part))
-        logging.info(
-            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
-        )
-        index += 1
-        try:
-            data_inm = get_model_param_by_inm(browser_inm, part)
-        except Exception as e:
-            logging.error(e)
-            error_file = StringIO()
-            traceback.print_exc(file=error_file)
-            details = error_file.getvalue()
-            file_name = f"{part}_{manufacturer}_{int(time.time())}"
-            with open(f"{file_name}.txt", "w") as f:
-                f.write(details)
-            # browser_inm.get_screenshot_as_file(f"{file_name}_inm.png")
-            # 运行出现错误10次
-            if error_count >= 10:  # 遇到问题,直接停止
-                sys.exit(0)
-            else:
-                error_count += 1
-        else:
-            ingram_micro_price = data_inm.get("ingram_micro_price", 0)
-            save_to_model_inm(part, ingram_micro_price)
-
-
-def spider_coo():
-    browser = create_browser()
-    begin = 1
-    data = Good.objects.filter(id__gt=begin)
-    for obj in data:
-        logging.info(f"id={obj.pk}")
-        if obj.coo:  # 已经有了就不用爬取了
-            continue
-        note = obj.note
-        if note:
-            url = json.loads(note).get("url")
-        else:
-            continue
-
-        browser.get(url)
-        waiting_to_load(browser)
-        time.sleep(3)
-        description_divs = browser.find_elements_by_xpath(
-            page_elements.get("description")
-        )
-        if not description_divs:
-            waiting_to_load(browser)
-            # time.sleep(20)
-            # 增加判断是否需要邮编,有则跳过
-            zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
-            if zip_div:
-                continue
-            # browser.get(url)
-            # waiting_to_load(browser)
-            # time.sleep(3)
-        coo = ""
-        divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
-        for div in divs:
-            text = div.text
-            if "Country of Origin" in text:
-                coo = text[18:].strip()
-        obj.coo = coo
-        obj.save()
-
-
-def spider_gsa():
-    browser_gsa = create_browser()
-    begin = 3420
-    data = get_data(
-        "PCI Brand Q2 GSA Dealer Pricing File 5-1-23TAAOnly爬虫加价格.xlsx",
-        begin,
-        part_line=2,
-        manufacturer_line=0,
-    )
-    error_count = 0
-    index = 1
-    for part, manufacturer in data:
-        # 处理float数
-        if isinstance(part, float):
-            part = str(int(part))
-        logging.info(
-            f"index={index}:{index + begin},part:{part},manufacturer:{manufacturer}"
-        )
-        index += 1
-        try:
-            data_gsa_list = get_model_param_by_gsa(browser_gsa, part)
-        except Exception as e:
-            logging.error(e)
-            error_file = StringIO()
-            traceback.print_exc(file=error_file)
-            details = error_file.getvalue()
-            file_name = f"{part}_{manufacturer}_{int(time.time())}"
-            with open(f"{file_name}.txt", "w") as f:
-                f.write(details)
-            browser_gsa.get_screenshot_as_file(f"{file_name}_gsa.png")
-            # 运行出现错误10次
-            if error_count >= 10:  # 遇到问题,直接停止
-                sys.exit(0)
-            else:
-                error_count += 1
-        else:
-            for data_gsa in data_gsa_list:
-                param_kvs = {
-                    "part": part,
-                    "manufacturer": manufacturer,
-                }
-                param_kvs.update(data_gsa)
-                save_to_model(param_kvs)
-
-
-def data_handling():
-    data = []
-    path = "/Users/myard/Desktop/spider/client/PCI Brand Q2 GSA Dealer Pricing File 5-1-23TAAOnly爬虫加价格.xlsx"
-    raw_data = get_data_by_excel(path, 1, cols=[2])
-    parts = raw_data[0]
-    for part in parts:
-        raw = [part, 0, 0, 0]
-        goods = Good.objects.filter(part=part)
-        if goods:
-            good = goods[0]
-            raw[1] = good.gsa_advantage_price_1
-            raw[2] = good.gsa_advantage_price_2
-            raw[3] = good.gsa_advantage_price_3
-        data.append(raw)
-    save_data_to_excel("1.xlsx", data)
 
 
 def ec_old2new():
