@@ -300,7 +300,6 @@ def get_model_param_by_ec(browser, part, manufacturer):
         if federal_govt_spa_divs:
             federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
         else:
-            save_error_screenshot(browser, "ec", f"{part}_federal_govt_spa")
             federal_govt_spa = 0
 
         mfr_part_no_divs = browser.find_elements_by_xpath(
@@ -309,7 +308,6 @@ def get_model_param_by_ec(browser, part, manufacturer):
         if mfr_part_no_divs:
             mfr_part_no = mfr_part_no_divs[0].text
         else:
-            save_error_screenshot(browser, "ec", f"{part}_mfr_part_no")
             mfr_part_no = ""
         vendor_part_no = mfr_part_no
         # 直接处理
@@ -429,11 +427,11 @@ def get_model_param_by_gsa(browser, part):
         gsa_data = []
         # 到详细页采集数据
         for (
-            source,
-            url,
-            product_name,
-            manufacturer_name,
-            mfr_part_no_gsa,
+                source,
+                url,
+                product_name,
+                manufacturer_name,
+                mfr_part_no_gsa,
         ) in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
@@ -549,7 +547,6 @@ def get_model_param_by_inm(browser, part):
             time.sleep(3)
     if not main_view_divs:
         logging.error(f"inm_{part}_load_page")
-        save_error_screenshot(browser, "inm", f"{part}_load_page")
 
     search_msrp_divs = browser.find_elements_by_xpath(page_elements.get("search_msrp"))
     if search_msrp_divs:
@@ -563,6 +560,10 @@ def get_model_param_by_inm(browser, part):
         time.sleep(3)
         text = search_msrp_divs[0].text
         ingram_micro_price = get_msrp(text)
+        obj, _ = ECGood.objects.get_or_create(part=part)
+        obj.inm_status = True
+        obj.ingram_micro_price = ingram_micro_price
+        obj.save()
         return {"ingram_micro_price": ingram_micro_price}
     else:
         return {}
@@ -700,17 +701,17 @@ def export(path, begin_row, begin_col, end_col, part_col):
             # 判断数值是否合理
             min_price = 0
             if (
-                ec_obj.federal_govt_spa
-                and 0.5 * gsa_advantage_price_2
-                <= ec_obj.federal_govt_spa
-                <= 1.5 * gsa_advantage_price_2
+                    ec_obj.federal_govt_spa
+                    and 0.5 * gsa_advantage_price_2
+                    <= ec_obj.federal_govt_spa
+                    <= 1.5 * gsa_advantage_price_2
             ):
                 min_price = ec_obj.federal_govt_spa
             if (
-                ec_obj.ingram_micro_price
-                and 0.5 * gsa_advantage_price_2
-                <= ec_obj.federal_govt_spa
-                <= 1.5 * gsa_advantage_price_2
+                    ec_obj.ingram_micro_price
+                    and 0.5 * gsa_advantage_price_2
+                    <= ec_obj.federal_govt_spa
+                    <= 1.5 * gsa_advantage_price_2
             ):
                 if min_price == 0:
                     min_price = ec_obj.ingram_micro_price
@@ -726,8 +727,8 @@ def export(path, begin_row, begin_col, end_col, part_col):
                     if gsa_obj.product_description2_strong:
                         strong = (
                             gsa_obj.product_description2_strong.split("by")[-1]
-                            .strip()
-                            .strip(".")
+                                .strip()
+                                .strip(".")
                         )
                         description = description.replace(strong, "TechFocus LLC")
                     if "For further" in description:
