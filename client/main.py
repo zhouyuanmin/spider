@@ -427,11 +427,11 @@ def get_model_param_by_gsa(browser, part):
         gsa_data = []
         # 到详细页采集数据
         for (
-                source,
-                url,
-                product_name,
-                manufacturer_name,
-                mfr_part_no_gsa,
+            source,
+            url,
+            product_name,
+            manufacturer_name,
+            mfr_part_no_gsa,
         ) in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
@@ -603,6 +603,8 @@ def spider():
     parts = data[0]
     manufacturers = data[1]
     for i, part in enumerate(parts):
+        if not part:  # 处理空格
+            continue
         # 处理float数
         if isinstance(part, float):
             part = str(int(part))
@@ -645,12 +647,14 @@ def ec_old2new():
             ec_obj.save()
 
 
-def export(path, begin_row, begin_col, end_col, part_col):
+def export(path, begin_row, begin_col, end_col, part_col, process=True):
     cols = list(range(begin_col, end_col + 1))
     excel_data = get_data_by_excel(path, begin_row, cols)
     parts = excel_data[part_col]
     data = []
     for i, part in enumerate(parts):
+        if not part:
+            continue
         if isinstance(part, float):
             part = str(int(part))
         row_data = []
@@ -690,10 +694,20 @@ def export(path, begin_row, begin_col, end_col, part_col):
         if ec_objs:
             ec_obj = ec_objs[0]
         else:
-            continue
+            if process:
+                continue
+            else:
+                ec_obj = ECGood(part=part)
         if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
-            continue
+            if process:
+                continue
+            else:
+                pass
         gsa_objs = GSAGood.objects.filter(part=part)
+        if (not process) and (not gsa_objs):
+            gsa_obj = GSAGood(part=part)
+            gsa_objs = [gsa_obj]
+
         for gsa_obj in gsa_objs:
             _row_data = []
             _row_data.extend(row_data)
@@ -701,23 +715,23 @@ def export(path, begin_row, begin_col, end_col, part_col):
             # 判断数值是否合理
             min_price = 0
             if (
-                    ec_obj.federal_govt_spa
-                    and 0.5 * gsa_advantage_price_2
-                    <= ec_obj.federal_govt_spa
-                    <= 1.5 * gsa_advantage_price_2
+                ec_obj.federal_govt_spa
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
             ):
                 min_price = ec_obj.federal_govt_spa
             if (
-                    ec_obj.ingram_micro_price
-                    and 0.5 * gsa_advantage_price_2
-                    <= ec_obj.federal_govt_spa
-                    <= 1.5 * gsa_advantage_price_2
+                ec_obj.ingram_micro_price
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
             ):
                 if min_price == 0:
                     min_price = ec_obj.ingram_micro_price
                 else:
                     min_price = min(min_price, ec_obj.ingram_micro_price)
-            if min_price:  # 数据合理
+            if min_price or (not process):  # 数据合理
                 # 处理描述
                 description = ""
                 if gsa_obj.product_description:
@@ -727,8 +741,8 @@ def export(path, begin_row, begin_col, end_col, part_col):
                     if gsa_obj.product_description2_strong:
                         strong = (
                             gsa_obj.product_description2_strong.split("by")[-1]
-                                .strip()
-                                .strip(".")
+                            .strip()
+                            .strip(".")
                         )
                         description = description.replace(strong, "TechFocus LLC")
                     if "For further" in description:
@@ -761,9 +775,10 @@ def export(path, begin_row, begin_col, end_col, part_col):
                 _row_data.append(description)
                 data.append(_row_data)
 
-    save_data_to_excel("1.xlsx", data)
+    save_data_to_excel("_done_未筛选.xlsx", data)
 
 
 if __name__ == "__main__":
-    spider()
-    export("/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx", 3, 0, 9, 1)
+    # spider()
+    export("", 3, 0, 6, 1, True)
+    export("", 3, 0, 6, 1, False)
