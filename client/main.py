@@ -437,12 +437,12 @@ def get_model_param_by_gsa(browser, part):
             browser.get(url)
             waiting_to_load(browser)
 
-            # product_name 取里面的
-            product_name_divs = browser.find_elements_by_xpath(
-                page_elements.get("product_name")
-            )
-            if product_name_divs:
-                product_name = product_name_divs[0].text
+            # # product_name 取里面的
+            # product_name_divs = browser.find_elements_by_xpath(
+            #     page_elements.get("product_name")
+            # )
+            # if product_name_divs:
+            #     product_name = product_name_divs[0].text
 
             description_divs = browser.find_elements_by_xpath(
                 page_elements.get("description")
@@ -784,23 +784,6 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
                 data.append(_row_data)
 
     save_data_to_excel("_done_未筛选.xlsx", data)
-
-
-def renew_gsa_by_url():
-    browser = create_browser()
-    objs = GSAGood.objects.all()
-    for obj in objs:
-        logging.info(obj.pk)
-        url = obj.url
-        browser.get(url)
-        waiting_to_load(browser, 5)
-        product_name_divs = browser.find_elements_by_xpath(
-            page_elements.get("product_name")
-        )
-        if product_name_divs:
-            product_name = product_name_divs[0].text
-            obj.product_name = product_name
-            obj.save()
 
 
 if __name__ == "__main__":
