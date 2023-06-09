@@ -53,6 +53,7 @@ page_elements = {
     "item_a": './/div[@class="itemName"]/a',
     "mfr_name": './/div[@class="mfrName"]',
     "mfr_part_no_gsa": './/div[@class="mfrPartNumber"]',
+    "product_name": '//h4[@role="heading"]',
     "product_description": '//div[@heading="Product Description"]/div',
     "description_strong": '//div[@heading="Vendor Description"]/strong',
     "description": '//div[@heading="Vendor Description"]/div',
@@ -398,7 +399,7 @@ def get_model_param_by_gsa(browser, part):
             source = get_num(source_div.text)
             url_div = product_div.find_element_by_xpath(page_elements.get("item_a"))
             url = url_div.get_attribute("href")
-            product_name = url_div.text
+            product_name = url_div.text  # 有问题,取里面的数据
             mfr_name_div = product_div.find_element_by_xpath(
                 page_elements.get("mfr_name")
             )
@@ -435,6 +436,13 @@ def get_model_param_by_gsa(browser, part):
         ) in valid_source_urls:
             browser.get(url)
             waiting_to_load(browser)
+
+            # product_name 取里面的
+            product_name_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_name")
+            )
+            if product_name_divs:
+                product_name = product_name_divs[0].text
 
             description_divs = browser.find_elements_by_xpath(
                 page_elements.get("description")
