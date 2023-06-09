@@ -786,7 +786,25 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
     save_data_to_excel("_done_未筛选.xlsx", data)
 
 
+def renew_gsa_by_url():
+    browser = create_browser()
+    objs = GSAGood.objects.all()
+    for obj in objs:
+        logging.info(obj.pk)
+        url = obj.url
+        browser.get(url)
+        waiting_to_load(browser, 5)
+        product_name_divs = browser.find_elements_by_xpath(
+            page_elements.get("product_name")
+        )
+        if product_name_divs:
+            product_name = product_name_divs[0].text
+            obj.product_name = product_name
+            obj.save()
+
+
 if __name__ == "__main__":
+    pass
     # spider()
-    export("", 3, 0, 6, 1, True)
-    export("", 3, 0, 6, 1, False)
+    # export("", 3, 0, 6, 1, True)
+    # export("", 3, 0, 6, 1, False)
