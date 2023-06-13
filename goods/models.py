@@ -29,6 +29,7 @@ class Brand(BaseModel):
     filter_sources = models.IntegerField(default=10, verbose_name="筛选sources")
     filter_count = models.IntegerField(default=10, verbose_name="筛选产品数量")
     max_page = models.IntegerField(verbose_name="最大页码")
+    keys = models.CharField(max_length=255, default="", verbose_name="关键词")
 
 
 class ECGood(BaseModel):
