@@ -28,6 +28,7 @@ class Brand(BaseModel):
     mini_count = models.IntegerField(default=10, verbose_name="爬虫产品数量")
     filter_sources = models.IntegerField(default=10, verbose_name="筛选sources")
     filter_count = models.IntegerField(default=10, verbose_name="筛选产品数量")
+    max_page = models.IntegerField(verbose_name="最大页码")
 
 
 class ECGood(BaseModel):
@@ -56,6 +57,9 @@ class ECGood(BaseModel):
 class GSAGood(BaseModel):
     brand_name = models.CharField(max_length=255, verbose_name="品牌名称")
     sin = models.CharField(max_length=255, default="", verbose_name="sin")
+    manufacturer_name = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="制造商名称"
+    )
     product_name = models.CharField(
         max_length=255, blank=True, default="", verbose_name="产品名称"
     )  # gsa网页上的
@@ -84,5 +88,5 @@ class GSAGood(BaseModel):
         max_length=255, blank=True, default="", verbose_name="制造商零件号"
     )  # gsa网页上的
     gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
-    url = models.CharField(max_length=255, blank=True, default="", verbose_name="url")
+    url = models.CharField(max_length=255, unique=True, verbose_name="url")
     source = models.IntegerField(verbose_name="source")

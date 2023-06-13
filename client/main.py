@@ -17,7 +17,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-from goods.models import ECGood, GSAGood
+from goods.models import Brand, ECGood, GSAGood
 
 # 日志配置
 logging.basicConfig(
@@ -747,6 +747,142 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
                 data.append(_row_data)
 
     save_data_to_excel("_done_未筛选.xlsx", data)
+
+
+def get_gsa_by_brand(brand_id):
+    brand = Brand(pk=brand_id)
+    browser = create_browser()
+    # 1、外部爬取
+    pages = [i + 1 for i in range(brand.max_page)]
+    for i in pages:
+        url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name}&s=11&searchType=0&db=0&p={i}"
+        browser.get(url)
+        waiting_to_load(browser, 5)
+
+        global_search_label = browser.find_elements_by_xpath(
+            page_elements.get("search")
+        )
+        if global_search_label:
+            # 页面加载完成
+            product_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_list")
+            )
+            for product_div in product_divs:
+                source_divs = product_div.find_elements_by_xpath(
+                    page_elements.get("sources")
+                )
+                if not source_divs:  # 有些产品,没有sources
+                    continue
+                source_div = source_divs[0]
+                source = get_num(source_div.text)
+                if source >= brand.mini_sources:
+                    url_div = product_div.find_element_by_xpath(
+                        page_elements.get("item_a")
+                    )
+                    url = url_div.get_attribute("href")
+                    product_name = url_div.text
+                    mfr_name_div = product_div.find_element_by_xpath(
+                        page_elements.get("mfr_name")
+                    )
+                    manufacturer_name = mfr_name_div.text[4:].strip()
+                    mfr_part_no_gsa_div = product_div.find_element_by_xpath(
+                        page_elements.get("mfr_part_no_gsa")
+                    )
+                    mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
+                    try:
+                        obj = GSAGood.objects.create(
+                            brand_name=brand.name,
+                            url=url,
+                            product_name=product_name,
+                            manufacturer_name=manufacturer_name,
+                            mfr_part_no_gsa=mfr_part_no_gsa,
+                            source=source,
+                        )
+                    except Exception as e:
+                        logging.error(e)
+
+            pass
+        else:
+            # 页面加载失败
+            with open(f"{brand.name}_{i}.txt") as f:
+                f.write(f"{brand.name}_{i}")
+    # 2、内部爬取
+    gsa_objs = GSAGood.objects.filter(brand_name=brand.name)
+    for gas_obj in gsa_objs:
+        if gas_obj.gsa_status:
+            continue  # 爬取过
+        browser.get(gas_obj.url)
+        waiting_to_load(browser)
+
+        # 增加判断是否需要邮编,有则跳过
+        zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
+        if zip_div:
+            gas_obj.gsa_status = True
+            gas_obj.save()
+            continue
+
+        global_search_label = browser.find_elements_by_xpath(
+            page_elements.get("search")
+        )
+        if global_search_label:
+            # 页面加载完成
+            coo = ""
+            sin = ""
+            divs = browser.find_elements_by_xpath(page_elements.get("coo_divs"))
+            for div in divs:
+                text = div.text
+                if "Country of Origin" in text:
+                    coo = text[18:].strip()
+                if "MAS/" in text:
+                    sin = text[21:].strip()
+
+            description_div = browser.find_element_by_xpath(
+                page_elements.get("description")
+            )
+            browser.execute_script(
+                "window.scrollTo(0, {})".format(description_div.location.get("y") - 160)
+            )
+            product_description = description_div.text
+
+            _description_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_description")
+            )
+            if _description_divs:
+                _product_description = _description_divs[0].text
+            else:
+                _product_description = ""
+            product_description2 = _product_description
+
+            _description_divs_strong = browser.find_elements_by_xpath(
+                page_elements.get("description_strong")
+            )
+            if _description_divs_strong:
+                product_description2_strong = _description_divs_strong[0].text
+            else:
+                product_description2_strong = ""
+
+            gsa_advantage_price_divs = browser.find_elements_by_xpath(
+                page_elements.get("gsa_advantage_price")
+            )[1:]
+            gsa_advantage_prices = [0, 0, 0]
+            for i, div in enumerate(gsa_advantage_price_divs):
+                if i >= 3:  # 0,1,2
+                    break
+                text = div.text
+                if "$" in text:
+                    gsa_advantage_prices[i] = get_dollar(text)
+            # 添加数据
+            gas_obj.sin = sin
+            gas_obj.product_description = product_description
+            gas_obj.product_description2_strong = product_description2_strong
+            gas_obj.product_description2 = product_description2
+            gas_obj.gsa_advantage_price_1 = gsa_advantage_prices[0]
+            gas_obj.gsa_advantage_price_2 = gsa_advantage_prices[1]
+            gas_obj.gsa_advantage_price_3 = gsa_advantage_prices[2]
+            gas_obj.coo = coo
+            gas_obj.save()
+        else:
+            pass
 
 
 if __name__ == "__main__":
