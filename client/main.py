@@ -252,7 +252,7 @@ def save_data_to_excel(path, data):
     work_book.close()
 
 
-def get_model_param_by_ec(browser, part, manufacturer):
+def get_model_param_by_ec(browser, part, manufacturer=""):
     """自带更新操作"""
     try:
         obj = ECGood.objects.get(part=part)
@@ -317,7 +317,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
         except ECGood.DoesNotExist:
             obj = ECGood(
                 part=part,
-                manufacturer=manufacturer,
+                # manufacturer=manufacturer,
                 mfr_part_no=mfr_part_no,
                 vendor_part_no=vendor_part_no,
                 msrp=msrp,
@@ -348,7 +348,7 @@ def get_model_param_by_ec(browser, part, manufacturer):
             if "Your search found no result." in text:
                 try:
                     obj, _ = ECGood.objects.get_or_create(part=part)
-                    obj.manufacturer = manufacturer
+                    # obj.manufacturer = manufacturer
                     obj.ec_status = True
                     obj.save()
                 except ECGood.DoesNotExist:
@@ -836,7 +836,7 @@ def get_gsa_by_brand(brand_id):
                 if "Country of Origin" in text:
                     coo = text[18:].strip()
                 if "MAS/" in text:
-                    sin = text[21:].strip()
+                    sin = text[22:].strip()  # 有一个换行符
 
             description_divs = browser.find_elements_by_xpath(
                 page_elements.get("description")
@@ -894,8 +894,26 @@ def get_gsa_by_brand(brand_id):
             pass
 
 
+def get_ec_by_brand(brand_id):
+    brand = Brand.objects.get(pk=brand_id)
+    browser_ec = login()
+    browser_inm = create_browser()
+    gsa_objs = GSAGood.objects.filter(brand_name=brand.name)
+    # 占位
+    for gas_obj in gsa_objs:
+        try:
+            obj, _ = ECGood.objects.get_or_create(part=gas_obj.mfr_part_no_gsa)
+        except Exception as e:
+            logging.error(e)
+
+    # 爬取数据
+    ec_objs = ECGood.objects.filter(ec_status=False)
+    for ec_obj in ec_objs:
+        get_model_param_by_ec(browser_ec, ec_obj.part)
+        get_model_param_by_inm(browser_inm, ec_obj.part)
+
+
 if __name__ == "__main__":
-    get_gsa_by_brand(1)
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)

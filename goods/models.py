@@ -34,7 +34,7 @@ class Brand(BaseModel):
 
 class ECGood(BaseModel):
     part = models.CharField(
-        max_length=255, blank=True, default="", verbose_name="零件号"
+        max_length=255, unique=True, default="", verbose_name="零件号"
     )  # 唯一值，与GSA的mfr_part_no_gsa对应
     mfr_part_no = models.CharField(
         max_length=255, blank=True, default="", verbose_name="制造商零件号"
@@ -51,8 +51,8 @@ class ECGood(BaseModel):
     ingram_micro_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="英迈国际价格"
     )  # ingram网页上的
-    ec_status = models.BooleanField(null=True, verbose_name="EC爬取状态")
-    inm_status = models.BooleanField(null=True, verbose_name="inm爬取状态")
+    ec_status = models.BooleanField(null=True, default=False, verbose_name="EC爬取状态")
+    inm_status = models.BooleanField(null=True, default=False, verbose_name="inm爬取状态")
 
 
 class GSAGood(BaseModel):
@@ -88,6 +88,6 @@ class GSAGood(BaseModel):
     mfr_part_no_gsa = models.CharField(
         max_length=255, blank=True, default="", verbose_name="制造商零件号"
     )  # gsa网页上的
-    gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
+    gsa_status = models.BooleanField(null=True, default=False, verbose_name="GSA爬取状态")
     url = models.CharField(max_length=255, unique=True, verbose_name="url")
     source = models.IntegerField(verbose_name="source")
