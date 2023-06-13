@@ -750,14 +750,15 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
 
 
 def get_gsa_by_brand(brand_id):
-    brand = Brand(pk=brand_id)
+    brand = Brand.objects.get(pk=brand_id)
     browser = create_browser()
     # 1、外部爬取
     pages = [i + 1 for i in range(brand.max_page)]
     for i in pages:
         url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name}&s=11&searchType=0&db=0&p={i}"
         browser.get(url)
-        waiting_to_load(browser, 5)
+        time.sleep(5)
+        waiting_to_load(browser)
 
         global_search_label = browser.find_elements_by_xpath(
             page_elements.get("search")
@@ -804,7 +805,7 @@ def get_gsa_by_brand(brand_id):
             pass
         else:
             # 页面加载失败
-            with open(f"{brand.name}_{i}.txt") as f:
+            with open(f"{brand.name}_{i}.txt", "w+") as f:
                 f.write(f"{brand.name}_{i}")
     # 2、内部爬取
     gsa_objs = GSAGood.objects.filter(brand_name=brand.name)
@@ -812,6 +813,7 @@ def get_gsa_by_brand(brand_id):
         if gas_obj.gsa_status:
             continue  # 爬取过
         browser.get(gas_obj.url)
+        time.sleep(5)
         waiting_to_load(browser)
 
         # 增加判断是否需要邮编,有则跳过
@@ -836,13 +838,19 @@ def get_gsa_by_brand(brand_id):
                 if "MAS/" in text:
                     sin = text[21:].strip()
 
-            description_div = browser.find_element_by_xpath(
+            description_divs = browser.find_elements_by_xpath(
                 page_elements.get("description")
             )
-            browser.execute_script(
-                "window.scrollTo(0, {})".format(description_div.location.get("y") - 160)
-            )
-            product_description = description_div.text
+            if description_divs:
+                description_div = description_divs[0]
+                browser.execute_script(
+                    "window.scrollTo(0, {})".format(
+                        description_div.location.get("y") - 160
+                    )
+                )
+                product_description = description_div.text
+            else:
+                product_description = ""
 
             _description_divs = browser.find_elements_by_xpath(
                 page_elements.get("product_description")
@@ -880,12 +888,14 @@ def get_gsa_by_brand(brand_id):
             gas_obj.gsa_advantage_price_2 = gsa_advantage_prices[1]
             gas_obj.gsa_advantage_price_3 = gsa_advantage_prices[2]
             gas_obj.coo = coo
+            gas_obj.gsa_status = True
             gas_obj.save()
         else:
             pass
 
 
 if __name__ == "__main__":
+    get_gsa_by_brand(1)
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)
