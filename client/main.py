@@ -17,7 +17,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-from goods.models import Good, ECGood, GSAGood
+from goods.models import ECGood, GSAGood
 
 # 日志配置
 logging.basicConfig(
@@ -577,23 +577,9 @@ def get_model_param_by_inm(browser, part):
         return {}
 
 
-def save_to_model(params):
-    source = params.pop("source")
-    url = params.pop("url")
-    note_kv = {"source": source, "url": url}
-    params["note"] = json.dumps(note_kv)
-    good = Good(**params)
-    good.save()
-
-
 def save_to_model_ec(params):
     ec_good = ECGood(**params)
     ec_good.save()
-
-
-def save_to_model_inm(part, ingram_micro_price):
-    objs = Good.objects.filter(part=part)
-    objs.update(ingram_micro_price=ingram_micro_price)
 
 
 def spider():
@@ -630,29 +616,6 @@ def spider():
             with open(f"{file_name}.txt", "w") as f:
                 f.write(details)
             sys.exit(0)
-
-
-def ec_old2new():
-    objs = Good.objects.all()
-    for obj in objs:
-        if ECGood.objects.filter(part=obj.part).exists():
-            logging.warning(f"{obj.pk}")
-            continue
-        else:
-            logging.info(f"{obj.pk}")
-            ec_obj = ECGood()
-            ec_obj.part = obj.part
-            ec_obj.manufacturer = obj.manufacturer
-            ec_obj.mfr_part_no = obj.mfr_part_no
-            ec_obj.vendor_part_no = obj.vendor_part_no
-            ec_obj.msrp = obj.msrp
-            ec_obj.federal_govt_spa = obj.federal_govt_spa
-            ec_obj.ingram_micro_price = obj.ingram_micro_price
-            if obj.federal_govt_spa:
-                ec_obj.ec_status = True
-            if obj.ingram_micro_price:
-                ec_obj.inm_status = True
-            ec_obj.save()
 
 
 def export(path, begin_row, begin_col, end_col, part_col, process=True):
