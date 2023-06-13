@@ -275,6 +275,7 @@ def get_model_param_by_ec(browser, part, manufacturer=""):
     # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
     url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
     browser.get(url)
+    time.sleep(5)
     waiting_to_load(browser)
 
     # 最低价产品(第一个)
@@ -914,6 +915,7 @@ def get_ec_by_brand(brand_id):
 
 
 if __name__ == "__main__":
+    get_ec_by_brand(1)
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)
