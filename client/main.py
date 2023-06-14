@@ -825,6 +825,7 @@ def get_gsa_by_brand_1(brand_id):
                 # 页面加载失败
                 with open(f"{brand.key}_{i}.txt", "w+") as f:
                     f.write(f"{brand.key}_{i}")
+    browser.quit()
 
 
 def get_gsa_by_brand_2():
@@ -915,6 +916,7 @@ def get_gsa_by_brand_2():
             gas_obj.save()
         else:
             pass
+    browser.quit()
 
 
 def get_ec_by_brand():
@@ -936,7 +938,7 @@ def get_ec_by_brand():
 
 
 if __name__ == "__main__":
-    get_gsa_by_brand_1(1)
+    # get_gsa_by_brand_1(1)
     get_gsa_by_brand_2()
     get_ec_by_brand()
     pass
