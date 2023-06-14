@@ -86,7 +86,7 @@ class GSAGood(BaseModel):
         max_length=255, blank=True, default="", verbose_name="制造商零件号"
     )  # gsa网页上的
     gsa_status = models.BooleanField(null=True, default=False, verbose_name="GSA爬取状态")
-    url = models.CharField(max_length=255, unique=True, verbose_name="url")
+    url = models.CharField(max_length=255, verbose_name="url")
     source = models.IntegerField(verbose_name="source")
 
     class Meta:
