@@ -771,7 +771,7 @@ def get_gsa_by_brand_1(brand_id):
     for price_param in price_params:
         for i in range(1, 11):  # 每页50个数据,最多10页
             url = (
-                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name}&s=11&searchType=0&db=0&c=50&p={i}"
+                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.key}&s=11&searchType=0&db=0&c=50&p={i}"
                 + price_param
             )
             browser.get(url)
@@ -786,6 +786,8 @@ def get_gsa_by_brand_1(brand_id):
                 product_divs = browser.find_elements_by_xpath(
                     page_elements.get("product_list")
                 )
+                if not product_divs:  # 无数据了,则跳出
+                    break
                 for product_div in product_divs:
                     source_divs = product_div.find_elements_by_xpath(
                         page_elements.get("sources")
