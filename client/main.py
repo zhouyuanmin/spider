@@ -750,66 +750,86 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
     save_data_to_excel("_done_未筛选.xlsx", data)
 
 
-def get_gsa_by_brand(brand_id):
+def get_gsa_by_brand_1(brand_id):
+    """
+    通过关键字查询到合适的产品,存储到数据库
+    """
     brand = Brand.objects.get(pk=brand_id)
     browser = create_browser()
+    price_params = [
+        "&q=14:71",  # <1
+        "&q=14:61&q=14:75",  # 1-5
+        "&q=14:65&q=14:710",  # 5-10
+        "&q=14:610&q=14:725",  # 10-25
+        "&q=14:625&q=14:750",  # 25-50
+        "&q=14:650&q=14:7100",  # 50-100
+        "&q=14:6100&q=14:7250",  # 100-250
+        "&q=14:6250&q=14:7500",  # 250-500
+        "&q=14:6500",  # 500+
+    ]
     # 1、外部爬取
-    pages = [i + 1 for i in range(brand.max_page)]
-    for i in pages:
-        url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name}&s=11&searchType=0&db=0&p={i}"
-        browser.get(url)
-        time.sleep(5)
-        waiting_to_load(browser)
-
-        global_search_label = browser.find_elements_by_xpath(
-            page_elements.get("search")
-        )
-        if global_search_label:
-            # 页面加载完成
-            product_divs = browser.find_elements_by_xpath(
-                page_elements.get("product_list")
+    for price_param in price_params:
+        for i in range(1, 11):  # 每页50个数据,最多10页
+            url = (
+                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name}&s=11&searchType=0&db=0&c=50&p={i}"
+                + price_param
             )
-            for product_div in product_divs:
-                source_divs = product_div.find_elements_by_xpath(
-                    page_elements.get("sources")
-                )
-                if not source_divs:  # 有些产品,没有sources
-                    continue
-                source_div = source_divs[0]
-                source = get_num(source_div.text)
-                if source >= brand.mini_sources:
-                    url_div = product_div.find_element_by_xpath(
-                        page_elements.get("item_a")
-                    )
-                    url = url_div.get_attribute("href")
-                    product_name = url_div.text
-                    mfr_name_div = product_div.find_element_by_xpath(
-                        page_elements.get("mfr_name")
-                    )
-                    manufacturer_name = mfr_name_div.text[4:].strip()
-                    mfr_part_no_gsa_div = product_div.find_element_by_xpath(
-                        page_elements.get("mfr_part_no_gsa")
-                    )
-                    mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
-                    try:
-                        obj = GSAGood.objects.create(
-                            brand_name=brand.name,
-                            url=url,
-                            product_name=product_name,
-                            manufacturer_name=manufacturer_name,
-                            mfr_part_no_gsa=mfr_part_no_gsa,
-                            source=source,
-                        )
-                    except Exception as e:
-                        logging.error(e)
+            browser.get(url)
+            time.sleep(5)
+            waiting_to_load(browser)
 
-            pass
-        else:
-            # 页面加载失败
-            with open(f"{brand.name}_{i}.txt", "w+") as f:
-                f.write(f"{brand.name}_{i}")
+            global_search_label = browser.find_elements_by_xpath(
+                page_elements.get("search")
+            )
+            if global_search_label:
+                # 页面加载完成
+                product_divs = browser.find_elements_by_xpath(
+                    page_elements.get("product_list")
+                )
+                for product_div in product_divs:
+                    source_divs = product_div.find_elements_by_xpath(
+                        page_elements.get("sources")
+                    )
+                    if not source_divs:  # 有些产品,没有sources
+                        continue
+                    source_div = source_divs[0]
+                    source = get_num(source_div.text)
+                    if source >= brand.mini_sources:
+                        url_div = product_div.find_element_by_xpath(
+                            page_elements.get("item_a")
+                        )
+                        url = url_div.get_attribute("href")
+                        product_name = url_div.text
+                        mfr_name_div = product_div.find_element_by_xpath(
+                            page_elements.get("mfr_name")
+                        )
+                        manufacturer_name = mfr_name_div.text[4:].strip()
+                        mfr_part_no_gsa_div = product_div.find_element_by_xpath(
+                            page_elements.get("mfr_part_no_gsa")
+                        )
+                        mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
+                        try:
+                            obj = GSAGood.objects.create(
+                                brand_key=brand.key,
+                                url=url,
+                                product_name=product_name,
+                                manufacturer_name=manufacturer_name,
+                                mfr_part_no_gsa=mfr_part_no_gsa,
+                                source=source,
+                            )
+                        except Exception as e:
+                            logging.error(e)
+            else:
+                # 页面加载失败
+                with open(f"{brand.name}_{i}.txt", "w+") as f:
+                    f.write(f"{brand.name}_{i}")
+
+
+def get_gsa_by_brand_2():
+    """通过详情页链接,爬取详情页信息"""
+    browser = create_browser()
     # 2、内部爬取
-    gsa_objs = GSAGood.objects.filter(brand_name=brand.name)
+    gsa_objs = GSAGood.objects.filter(gsa_status=False)
     for gas_obj in gsa_objs:
         if gas_obj.gsa_status:
             continue  # 爬取过
@@ -895,11 +915,10 @@ def get_gsa_by_brand(brand_id):
             pass
 
 
-def get_ec_by_brand(brand_id):
-    brand = Brand.objects.get(pk=brand_id)
+def get_ec_by_brand():
     browser_ec = login()
     browser_inm = create_browser()
-    gsa_objs = GSAGood.objects.filter(brand_name=brand.name)
+    gsa_objs = GSAGood.objects.filter(sin="33411", gsa_status=True)  # 有效数据
     # 占位
     for gas_obj in gsa_objs:
         try:
@@ -915,7 +934,9 @@ def get_ec_by_brand(brand_id):
 
 
 if __name__ == "__main__":
-    get_ec_by_brand(1)
+    get_gsa_by_brand_1(1)
+    get_gsa_by_brand_2()
+    get_ec_by_brand()
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)
