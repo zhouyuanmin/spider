@@ -834,6 +834,7 @@ def get_gsa_by_brand_2():
     # 2、内部爬取
     gsa_objs = GSAGood.objects.filter(gsa_status=False)
     for gas_obj in gsa_objs:
+        logging.info(f"gas_obj.pk={gas_obj.pk}")
         if gas_obj.gsa_status:
             continue  # 爬取过
         browser.get(gas_obj.url)
@@ -925,6 +926,7 @@ def get_ec_by_brand():
     gsa_objs = GSAGood.objects.filter(sin="33411", gsa_status=True)  # 有效数据
     # 占位
     for gas_obj in gsa_objs:
+        logging.info(f"gas_obj.pk={gas_obj.pk}")
         try:
             obj, _ = ECGood.objects.get_or_create(part=gas_obj.mfr_part_no_gsa)
         except Exception as e:
