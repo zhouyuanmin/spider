@@ -969,7 +969,7 @@ def export_by_brand(brand_name="HP", process=True):
         "description",
     ]
     data.append(headers)
-    brands = Brand.objects.filter(name=brand_name, id=1)
+    brands = Brand.objects.filter(name=brand_name)
     for brand in brands:
         gsa_objs = GSAGood.objects.filter(brand_key=brand.key, sin="33411")
         for gsa_obj in gsa_objs:
