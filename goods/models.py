@@ -24,12 +24,9 @@ class BaseModel(models.Model):
 
 class Brand(BaseModel):
     name = models.CharField(max_length=255, verbose_name="品牌名称")  # HP or Dell
-    mini_sources = models.IntegerField(default=10, verbose_name="爬虫sources")
-    mini_count = models.IntegerField(default=10, verbose_name="爬虫产品数量")
+    key = models.CharField(max_length=255, verbose_name="关键词")  # HP Laptop
+    mini_sources = models.IntegerField(default=5, verbose_name="爬虫sources")
     filter_sources = models.IntegerField(default=10, verbose_name="筛选sources")
-    filter_count = models.IntegerField(default=10, verbose_name="筛选产品数量")
-    max_page = models.IntegerField(default=0, verbose_name="最大页码")
-    keys = models.CharField(max_length=255, default="", verbose_name="关键词")
 
 
 class ECGood(BaseModel):
@@ -56,8 +53,8 @@ class ECGood(BaseModel):
 
 
 class GSAGood(BaseModel):
-    brand_name = models.CharField(max_length=255, verbose_name="品牌名称")
-    sin = models.CharField(max_length=255, default="", verbose_name="sin")
+    brand_key = models.CharField(max_length=255, verbose_name="关键词")
+    sin = models.CharField(max_length=255, default="", verbose_name="sin")  # 给EC用
     manufacturer_name = models.CharField(
         max_length=255, blank=True, default="", verbose_name="制造商名称"
     )
@@ -91,3 +88,6 @@ class GSAGood(BaseModel):
     gsa_status = models.BooleanField(null=True, default=False, verbose_name="GSA爬取状态")
     url = models.CharField(max_length=255, unique=True, verbose_name="url")
     source = models.IntegerField(verbose_name="source")
+
+    class Meta:
+        unique_together = ["brand_key", "url"]
