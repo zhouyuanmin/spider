@@ -968,9 +968,10 @@ def export_by_brand(brand_name="HP", process=True):
         "min_price",
         "description",
     ]
-    brands = Brand.objects.filter(name=brand_name)
+    data.append(headers)
+    brands = Brand.objects.filter(name=brand_name, id=1)
     for brand in brands:
-        gsa_objs = GSAGood.objects.filter(keyword=brand.key)
+        gsa_objs = GSAGood.objects.filter(brand_key=brand.key, sin="33411")
         for gsa_obj in gsa_objs:
             ec_obj, _ = ECGood.objects.get_or_create(part=gsa_obj.mfr_part_no_gsa)
             _row_data = []
@@ -1051,7 +1052,8 @@ def export_by_brand(brand_name="HP", process=True):
 
 if __name__ == "__main__":
     # 爬取
-    get_gsa_by_brand_1(2)  # 爬取gsa
+    for i in range(1, 10):
+        get_gsa_by_brand_1(2)  # 爬取gsa
     # 爬取2
     get_gsa_by_brand_2()  # 爬取补充gsa
     get_ec_by_brand()  # ec和inm
