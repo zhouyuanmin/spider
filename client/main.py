@@ -823,8 +823,8 @@ def get_gsa_by_brand_1(brand_id):
                             logging.error(e)
             else:
                 # 页面加载失败
-                with open(f"{brand.name}_{i}.txt", "w+") as f:
-                    f.write(f"{brand.name}_{i}")
+                with open(f"{brand.key}_{i}.txt", "w+") as f:
+                    f.write(f"{brand.key}_{i}")
 
 
 def get_gsa_by_brand_2():
