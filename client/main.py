@@ -1075,6 +1075,7 @@ def export_by_brand(brand_name, brand_key, process=True):
 if __name__ == "__main__":
     # 爬取
     for i in range(2, 15):
+        logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
     # 爬取2
     get_gsa_by_brand_2()  # 爬取补充gsa
