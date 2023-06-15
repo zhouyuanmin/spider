@@ -1000,6 +1000,9 @@ def export_by_brand(brand_name, brand_key, process=True):
                     break
             if not status:  # 厂家不包含关键词,则剔除
                 continue
+            # source参与过滤
+            if gsa_obj.source < brand.filter_sources:
+                continue
             if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
                 if process:
                     continue
