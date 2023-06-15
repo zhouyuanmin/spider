@@ -806,6 +806,16 @@ def get_gsa_by_brand_1(brand_id):
                             page_elements.get("mfr_name")
                         )
                         manufacturer_name = mfr_name_div.text[4:].strip()
+                        # 厂家不包含关键词,则剔除
+                        key_str = brand.note
+                        keys = [_.lower() for _ in key_str.split(",")]
+                        status = False
+                        for key in keys:
+                            if key in manufacturer_name.lower():
+                                status = True
+                                break
+                        if not status:  # 厂家不包含关键词,则剔除
+                            continue
                         mfr_part_no_gsa_div = product_div.find_element_by_xpath(
                             page_elements.get("mfr_part_no_gsa")
                         )
@@ -935,11 +945,12 @@ def get_ec_by_brand():
     # 爬取数据
     ec_objs = ECGood.objects.filter(ec_status=False)
     for ec_obj in ec_objs:
+        logging.info(f"ec_obj.pk={ec_obj.pk}")
         get_model_param_by_ec(browser_ec, ec_obj.part)
         get_model_param_by_inm(browser_inm, ec_obj.part)
 
 
-def export_by_brand(brand_name="HP", process=True):
+def export_by_brand(brand_name, brand_key, process=True):
     data = []
     headers = [
         "品牌名称",
@@ -969,13 +980,22 @@ def export_by_brand(brand_name="HP", process=True):
         "description",
     ]
     data.append(headers)
-    brands = Brand.objects.filter(name=brand_name)
+    brands = Brand.objects.filter(key=brand_key)
     for brand in brands:
         gsa_objs = GSAGood.objects.filter(brand_key=brand.key, sin="33411")
         for gsa_obj in gsa_objs:
             ec_obj, _ = ECGood.objects.get_or_create(part=gsa_obj.mfr_part_no_gsa)
             _row_data = []
             # 处理数据
+            key_str = brand.note
+            keys = [_.lower() for _ in key_str.split(",")]
+            status = False
+            for key in keys:
+                if key in gsa_obj.manufacturer_name.lower():
+                    status = True
+                    break
+            if not status:  # 厂家不包含关键词,则剔除
+                continue
             if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
                 if process:
                     continue
@@ -1047,16 +1067,18 @@ def export_by_brand(brand_name="HP", process=True):
                 _row_data.append(min_price)
                 _row_data.append(description)
                 data.append(_row_data)
-    save_data_to_excel(f"{brand_name}_done_{'筛选' if process else '未筛选'}.xlsx", data)
+    save_data_to_excel(
+        f"{brand_name}_{brand_key}_done_{'筛选' if process else '未筛选'}.xlsx", data
+    )
 
 
 if __name__ == "__main__":
     # 爬取
-    for i in range(1, 10):
-        get_gsa_by_brand_1(2)  # 爬取gsa
+    for i in range(2, 15):
+        get_gsa_by_brand_1(i)  # 爬取gsa
     # 爬取2
     get_gsa_by_brand_2()  # 爬取补充gsa
     get_ec_by_brand()  # ec和inm
     # 导出
-    export_by_brand("HP", process=True)
-    export_by_brand("HP", process=False)
+    export_by_brand(brand_name="HP", brand_key="HP Desktop", process=True)
+    export_by_brand(brand_name="HP", brand_key="HP Desktop", process=False)
