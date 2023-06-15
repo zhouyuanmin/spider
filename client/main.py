@@ -575,6 +575,10 @@ def get_model_param_by_inm(browser, part):
         obj.save()
         return {"ingram_micro_price": ingram_micro_price}
     else:
+        obj, _ = ECGood.objects.get_or_create(part=part)
+        obj.inm_status = True
+        obj.ingram_micro_price = 0
+        obj.save()
         return {}
 
 
@@ -1074,7 +1078,7 @@ def export_by_brand(brand_name, brand_key, process=True):
 
 if __name__ == "__main__":
     # 爬取
-    for i in range(2, 15):
+    for i in range(6, 10):
         logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
     # 爬取2
