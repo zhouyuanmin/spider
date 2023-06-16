@@ -954,7 +954,7 @@ def get_ec_by_brand():
         get_model_param_by_inm(browser_inm, ec_obj.part)
 
 
-def export_by_brand(brand_name, brand_key, process=True):
+def export_by_brand_key(brand_name, brand_key, process=True):
     data = []
     headers = [
         "品牌名称",
@@ -1079,14 +1079,146 @@ def export_by_brand(brand_name, brand_key, process=True):
     )
 
 
+def export_by_brand(brand_name, process=True):
+    data = []
+    headers = [
+        "品牌名称",
+        "关键词",
+        # ec
+        "part",
+        "mfr_part_no",
+        "vendor_part_no",
+        "msrp",
+        "federal_govt_spa",
+        "ingram_micro_price",
+        # gsa
+        "sin",
+        "manufacturer_name",
+        "product_name",
+        "product_description",
+        "product_description2_strong",
+        "product_description2",
+        "gsa_advantage_price_1",
+        "gsa_advantage_price_2",
+        "gsa_advantage_price_3",
+        "coo",
+        "mfr_part_no_gsa",
+        "url",
+        "source",
+        "min_price",
+        "description",
+    ]
+    data.append(headers)
+    brands = Brand.objects.filter(name=brand_name)
+    for brand in brands:
+        gsa_objs = GSAGood.objects.filter(brand_key=brand.key, sin="33411")
+        for gsa_obj in gsa_objs:
+            ec_obj, _ = ECGood.objects.get_or_create(part=gsa_obj.mfr_part_no_gsa)
+            _row_data = []
+            # 处理数据
+            key_str = brand.note
+            keys = [_.lower() for _ in key_str.split(",")]
+            status = False
+            for key in keys:
+                if key in gsa_obj.manufacturer_name.lower():
+                    status = True
+                    break
+            if not status:  # 厂家不包含关键词,则剔除
+                continue
+            # source参与过滤
+            if gsa_obj.source < brand.filter_sources:
+                continue
+            if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
+                if process:
+                    continue
+                else:
+                    pass
+            gsa_advantage_price_2 = float(gsa_obj.gsa_advantage_price_2)
+            # 判断数值是否合理
+            min_price = 0
+            if (
+                ec_obj.federal_govt_spa
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                min_price = ec_obj.federal_govt_spa
+            if (
+                ec_obj.ingram_micro_price
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                if min_price == 0:
+                    min_price = ec_obj.ingram_micro_price
+                else:
+                    min_price = min(min_price, ec_obj.ingram_micro_price)
+            if min_price or (not process):  # 数据合理
+                # 处理描述
+                description = ""
+                if gsa_obj.product_description:
+                    description = gsa_obj.product_description
+                elif gsa_obj.product_description2:
+                    description = gsa_obj.product_description2
+                    if gsa_obj.product_description2_strong:
+                        strong = (
+                            gsa_obj.product_description2_strong.split("by")[-1]
+                            .strip()
+                            .strip(".")
+                        )
+                        description = description.replace(strong, "TechFocus LLC")
+                    if "For further" in description:
+                        description = description.split("For further")[0]
+                    description += "For further information contact TechFocus at 304-906-8124 Or email lwang@techfocusUSA.com"
+                else:
+                    description = ""
+                # 加数据
+                _row_data.append(brand.name)
+                _row_data.append(brand.key)
+
+                _row_data.append(ec_obj.part)
+                _row_data.append(ec_obj.mfr_part_no)
+                _row_data.append(ec_obj.vendor_part_no)
+                _row_data.append(ec_obj.msrp)
+                _row_data.append(ec_obj.federal_govt_spa)
+                _row_data.append(ec_obj.ingram_micro_price)
+
+                _row_data.append(gsa_obj.sin)
+                _row_data.append(gsa_obj.manufacturer_name)
+                _row_data.append(gsa_obj.product_name)
+                _row_data.append(gsa_obj.product_description)
+                _row_data.append(gsa_obj.product_description2_strong)
+                _row_data.append(gsa_obj.product_description2)
+                _row_data.append(gsa_obj.gsa_advantage_price_1)
+                _row_data.append(gsa_obj.gsa_advantage_price_2)
+                _row_data.append(gsa_obj.gsa_advantage_price_3)
+                _row_data.append(gsa_obj.coo)
+                _row_data.append(gsa_obj.mfr_part_no_gsa)
+                _row_data.append(gsa_obj.url)
+                _row_data.append(gsa_obj.source)
+                _row_data.append(min_price)
+                _row_data.append(description)
+                data.append(_row_data)
+    save_data_to_excel(f"{brand_name}_done_{'筛选' if process else '未筛选'}.xlsx", data)
+
+
+def load_brand():
+    brand_name = "Dell"
+    string = "monitor, laptop, server, dock, Precision,PowerEdge, SSD SATA, PowerEdge R640 Server,PowerEdge R6515 Server,Dell UltraSharp,PowerEdge R7515 Server,Dell 34 Curved,Dell Dual Monitor,Dell 27 Monitor-P2722H, Latitude, Dell 24 Monitor-P2422H,rack, storage,Precision Workstation,OptiPlex,switch,tower, rugged"
+    keys = [_.strip() for _ in string.split(",")]
+    print(keys)
+    for key in keys:
+        Brand.objects.create(name=brand_name, key=key, mini_sources=4, filter_sources=4)
+
+
 if __name__ == "__main__":
     # 爬取
-    for i in range(6, 10):
+    for i in range(1, 24):
         logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
     # 爬取2
     get_gsa_by_brand_2()  # 爬取补充gsa
     get_ec_by_brand()  # ec和inm
     # 导出
-    export_by_brand(brand_name="HP", brand_key="HP Desktop", process=True)
-    export_by_brand(brand_name="HP", brand_key="HP Desktop", process=False)
+    export_by_brand(brand_name="Dell", process=True)
+    export_by_brand(brand_name="Dell", process=False)
