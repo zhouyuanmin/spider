@@ -346,7 +346,7 @@ def get_model_param_by_ec(browser, part, manufacturer=""):
         tbody = browser.find_elements_by_xpath(page_elements.get("tbody"))
         if tbody:  # 页面正常
             text = tbody[0].text
-            if "Your search found no result." in text:
+            if "Your search found no result." in text or "product in this page" in text:
                 try:
                     obj, _ = ECGood.objects.get_or_create(part=part)
                     # obj.manufacturer = manufacturer
