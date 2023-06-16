@@ -838,7 +838,7 @@ def get_gsa_by_brand_1(brand_id):
             else:
                 # 页面加载失败
                 with open(f"{brand.key}_{i}.txt", "w+") as f:
-                    f.write(f"{brand.key}_{i}")
+                    f.write(f"{url}")
     browser.quit()
 
 
@@ -1209,6 +1209,24 @@ def load_brand():
     print(keys)
     for key in keys:
         Brand.objects.create(name=brand_name, key=key, mini_sources=4, filter_sources=4)
+
+
+def delete_gsa():
+    brand_name = "Dell"
+    brand_objs = Brand.objects.filter(name=brand_name)
+    for brand_obj in brand_objs:
+        gsa_objs = GSAGood.objects.filter(brand_key=brand_obj.key)
+        for gsa_obj in gsa_objs:
+            # 厂家不包含关键词,则剔除
+            key_str = brand_obj.note
+            keys = [_.lower() for _ in key_str.split(",")]
+            status = False
+            for key in keys:
+                if key in gsa_obj.manufacturer_name.lower():
+                    status = True
+                    break
+            if not status:  # 厂家不包含关键词,则剔除
+                gsa_obj.delete()
 
 
 if __name__ == "__main__":
