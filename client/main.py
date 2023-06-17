@@ -775,7 +775,7 @@ def get_gsa_by_brand_1(brand_id):
     for price_param in price_params:
         for i in range(1, 11):  # 每页50个数据,最多10页
             url = (
-                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name + ' ' + brand.key}&s=11&searchType=0&db=0&c=50&p={i}"
+                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.key}&s=11&searchType=0&db=0&c=50&p={i}"
                 + price_param
             )
             browser.get(url)
@@ -825,6 +825,12 @@ def get_gsa_by_brand_1(brand_id):
                         )
                         mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
                         try:
+                            objs = GSAGood.objects.filter(url=url)
+                            if objs:
+                                _obj = objs[0]
+                                _obj.brand_key = brand.key
+                                _obj.save()
+                                continue
                             obj = GSAGood.objects.create(
                                 brand_key=brand.key,
                                 url=url,
@@ -1239,11 +1245,11 @@ def delete_gsa():
 
 if __name__ == "__main__":
     # 爬取
-    a1 = range(29, 39)
-    a2 = range(39, 49)
-    a3 = range(49, 59)
-    a4 = range(59, 69)
-    a = a1
+    a1 = range(26, 36)
+    a2 = range(36, 47)
+    a3 = range(47, 58)
+    a4 = range(58, 69)
+    a = a4
     for i in a:
         logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
