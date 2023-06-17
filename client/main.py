@@ -27,7 +27,7 @@ logging.basicConfig(
 
 # 全局配置信息
 base_dir = Path(__file__).resolve().parent
-proxy = "http://127.0.0.1:4780"
+proxy = "http://127.0.0.1:4780"  # 4,5,6,7
 window_width, window_height = (1250, 900)  # 需要根据分辨率来确定窗口大小
 cookies_path = os.path.join(base_dir, "cookies.txt")
 login_email = "lwang@techfocusUSA.com"
@@ -775,7 +775,7 @@ def get_gsa_by_brand_1(brand_id):
     for price_param in price_params:
         for i in range(1, 11):  # 每页50个数据,最多10页
             url = (
-                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.key}&s=11&searchType=0&db=0&c=50&p={i}"
+                f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{brand.name + ' ' + brand.key}&s=11&searchType=0&db=0&c=50&p={i}"
                 + price_param
             )
             browser.get(url)
@@ -842,11 +842,14 @@ def get_gsa_by_brand_1(brand_id):
     browser.quit()
 
 
-def get_gsa_by_brand_2():
+def get_gsa_by_brand_2(b):
     """通过详情页链接,爬取详情页信息"""
     browser = create_browser()
     # 2、内部爬取
     gsa_objs = GSAGood.objects.filter(gsa_status=False)
+    count = gsa_objs.count()
+    base = count // 4
+    gsa_objs = gsa_objs[base * (b - 1) : base * b]
     for gas_obj in gsa_objs:
         logging.info(f"gas_obj.pk={gas_obj.pk}")
         if gas_obj.gsa_status:
@@ -1236,15 +1239,20 @@ def delete_gsa():
 
 if __name__ == "__main__":
     # 爬取
-    for i in range(1, 24):
+    a1 = range(29, 39)
+    a2 = range(39, 49)
+    a3 = range(49, 59)
+    a4 = range(59, 69)
+    a = a1
+    for i in a:
         logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
     # # 爬取2
-    while True:
-        try:
-            get_gsa_by_brand_2()  # 爬取补充gsa
-        except Exception as e:
-            logging.error(e)
+    # while True:
+    #     try:
+    #         get_gsa_by_brand_2(3)  # 爬取补充gsa
+    #     except Exception as e:
+    #         logging.error(e)
     # for i in range(100):
     #     logging.info(f"i={i}")
     #     try:
