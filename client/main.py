@@ -952,6 +952,8 @@ def get_ec_by_brand():
         logging.info(f"ec_obj.pk={ec_obj.pk}")
         get_model_param_by_ec(browser_ec, ec_obj.part)
         get_model_param_by_inm(browser_inm, ec_obj.part)
+    browser_ec.quit()
+    browser_inm.quit()
 
 
 def export_by_brand_key(brand_name, brand_key, process=True):
@@ -1203,12 +1205,15 @@ def export_by_brand(brand_name, process=True):
 
 
 def load_brand():
-    brand_name = "Dell"
-    string = "monitor, laptop, server, dock, Precision,PowerEdge, SSD SATA, PowerEdge R640 Server,PowerEdge R6515 Server,Dell UltraSharp,PowerEdge R7515 Server,Dell 34 Curved,Dell Dual Monitor,Dell 27 Monitor-P2722H, Latitude, Dell 24 Monitor-P2422H,rack, storage,Precision Workstation,OptiPlex,switch,tower, rugged"
+    brand_name = "HP"
+    string = "PRODESK,Workstation,Dock"
+    note = "hp,hewlett"
     keys = [_.strip() for _ in string.split(",")]
     print(keys)
     for key in keys:
-        Brand.objects.create(name=brand_name, key=key, mini_sources=4, filter_sources=4)
+        Brand.objects.create(
+            name=brand_name, key=key, mini_sources=8, filter_sources=8, note=note
+        )
 
 
 def delete_gsa():
@@ -1234,9 +1239,18 @@ if __name__ == "__main__":
     for i in range(1, 24):
         logging.info(f"i={i}")
         get_gsa_by_brand_1(i)  # 爬取gsa
-    # 爬取2
-    get_gsa_by_brand_2()  # 爬取补充gsa
-    get_ec_by_brand()  # ec和inm
-    # 导出
-    export_by_brand(brand_name="Dell", process=True)
-    export_by_brand(brand_name="Dell", process=False)
+    # # 爬取2
+    while True:
+        try:
+            get_gsa_by_brand_2()  # 爬取补充gsa
+        except Exception as e:
+            logging.error(e)
+    # for i in range(100):
+    #     logging.info(f"i={i}")
+    #     try:
+    #         get_ec_by_brand()  # ec和inm
+    #     except Exception as e:
+    #         logging.error(e)
+    # # 导出
+    # export_by_brand(brand_name="Dell", process=True)
+    # export_by_brand(brand_name="Dell", process=False)
