@@ -1321,20 +1321,21 @@ def get_gsa_by_url():
 
 if __name__ == "__main__":
     # 爬取
-    a1 = range(26, 36)
-    a2 = range(36, 47)
-    a3 = range(47, 58)
-    a4 = range(58, 69)
-    a = a4
-    for i in a:
-        logging.info(f"i={i}")
-        get_gsa_by_brand_1(i)  # 爬取gsa
+    # a1 = range(26, 36)
+    # a2 = range(36, 47)
+    # a3 = range(47, 58)
+    # a4 = range(58, 69)
+    # a = a4
+    # for i in a:
+    #     logging.info(f"i={i}")
+    #     get_gsa_by_brand_1(i)  # 爬取gsa
     # # 爬取2
-    # while True:
-    #     try:
-    #         get_gsa_by_brand_2(2)  # 爬取补充gsa
-    #     except Exception as e:
-    #         logging.error(e)
+    while True:
+        try:
+            get_gsa_by_brand_2(1)  # 爬取补充gsa
+        except Exception as e:
+            logging.error(e)
+        break
     # for i in range(100):
     #     logging.info(f"i={i}")
     #     try:
