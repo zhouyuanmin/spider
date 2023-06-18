@@ -65,10 +65,10 @@ class GSAGood(BaseModel):
         max_length=1024, blank=True, default="", verbose_name="产品描述"
     )  # gsa网页上的
     product_description2_strong = models.CharField(
-        max_length=1024, blank=True, default="", verbose_name="产品描述strong"
+        max_length=255, blank=True, default="", verbose_name="产品描述strong"
     )  # gsa网页上的
     product_description2 = models.CharField(
-        max_length=255, blank=True, default="", verbose_name="产品描述2"
+        max_length=1024, blank=True, default="", verbose_name="产品描述2"
     )  # gsa网页上的
     gsa_advantage_price_1 = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格1"

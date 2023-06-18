@@ -909,6 +909,8 @@ def get_gsa_by_brand_2(b):
             else:
                 _product_description = ""
             product_description2 = _product_description
+            if len(product_description2) >= 1000:
+                product_description2 = product_description2[0:1000]
 
             _description_divs_strong = browser.find_elements_by_xpath(
                 page_elements.get("description_strong")
@@ -1337,12 +1339,12 @@ if __name__ == "__main__":
     #     get_gsa_by_brand_1(i)  # 爬取gsa
     # 1.1单个关键词数据保持在一千以内
     # # 爬取2
-    # while True:
-    #     try:
-    #         get_gsa_by_brand_2(0)  # 爬取补充gsa
-    #     except Exception as e:
-    #         logging.error(e)
-    #     break
+    while True:
+        try:
+            get_gsa_by_brand_2(1)  # 爬取补充gsa
+        except Exception as e:
+            logging.error(e)
+        break
     # for i in range(100):
     #     logging.info(f"i={i}")
     #     try:
