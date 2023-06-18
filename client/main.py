@@ -1377,6 +1377,51 @@ def get_excel_to_mysql_gsa_detail(path):
             continue
 
 
+def get_excel_to_mysql_ec_detail(path):
+    data = get_data_by_excel(path, begin_row=1, cols=[5, 6, 7, 8, 9, 10, 11, 12])
+    # part, 5
+    # mfr_part_no, 6
+    # vendor_part_no, 7
+    # msrp, 8
+    # federal_govt_spa, 9
+    # ingram_micro_price, 10
+    # ec_status 状态 11
+    # inm_status 状态 12
+    parts = data[0]
+    mfr_part_nos = data[1]
+    vendor_part_nos = data[2]
+    msrps = data[3]
+    federal_govt_spas = data[4]
+    ingram_micro_prices = data[5]
+    ec_statuses = data[6]
+    inm_statuses = data[7]
+    for i, part in enumerate(parts):
+        logging.info(f"{i}:{part}")
+        try:
+            ec_obj = ECGood.objects.get(part=part)
+            if ec_obj.ec_status:
+                continue
+            ec_obj.mfr_part_no = mfr_part_nos[i]
+            ec_obj.vendor_part_no = vendor_part_nos[i]
+            ec_obj.msrp = msrps[i]
+            ec_obj.federal_govt_spa = federal_govt_spas[i]
+            ec_obj.ingram_micro_price = ingram_micro_prices[i]
+            ec_obj.ec_status = ec_statuses[i]
+            ec_obj.inm_status = inm_statuses[i]
+            ec_obj.save()
+        except ECGood.DoesNotExist:
+            # 没有则插入
+            ec_obj = ECGood(part=part)
+            ec_obj.mfr_part_no = mfr_part_nos[i]
+            ec_obj.vendor_part_no = vendor_part_nos[i]
+            ec_obj.msrp = msrps[i]
+            ec_obj.federal_govt_spa = federal_govt_spas[i]
+            ec_obj.ingram_micro_price = ingram_micro_prices[i]
+            ec_obj.ec_status = ec_statuses[i]
+            ec_obj.inm_status = inm_statuses[i]
+            ec_obj.save()
+
+
 if __name__ == "__main__":
     pass
     # 爬取
