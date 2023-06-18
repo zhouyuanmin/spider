@@ -852,7 +852,7 @@ def get_gsa_by_brand_2(b):
     """通过详情页链接,爬取详情页信息"""
     browser = create_browser()
     # 2、内部爬取
-    gsa_objs = GSAGood.objects.filter(gsa_status=False)
+    gsa_objs = GSAGood.objects.filter(gsa_status=False, delete_at__isnull=True)
     if b:
         count = gsa_objs.count()
         base = count // 4
@@ -947,7 +947,9 @@ def get_gsa_by_brand_2(b):
 def get_ec_by_brand():
     browser_ec = login()
     browser_inm = create_browser()
-    gsa_objs = GSAGood.objects.filter(sin="33411", gsa_status=True)  # 有效数据
+    gsa_objs = GSAGood.objects.filter(
+        sin="33411", gsa_status=True, delete_at__isnull=True
+    )  # 有效数据
     # 占位
     for gas_obj in gsa_objs:
         logging.info(f"gas_obj.pk={gas_obj.pk}")
@@ -1123,7 +1125,9 @@ def export_by_brand(brand_name, process=True):
     data.append(headers)
     brands = Brand.objects.filter(name=brand_name)
     for brand in brands:
-        gsa_objs = GSAGood.objects.filter(brand_key=brand.key, sin="33411")
+        gsa_objs = GSAGood.objects.filter(
+            brand_key=brand.key, sin="33411", delete_at__isnull=True
+        )
         for gsa_obj in gsa_objs:
             ec_obj, _ = ECGood.objects.get_or_create(part=gsa_obj.mfr_part_no_gsa)
             _row_data = []
@@ -1323,14 +1327,15 @@ def get_gsa_by_url():
 if __name__ == "__main__":
     pass
     # 爬取
-    # a1 = range(26, 36)
-    # a2 = range(36, 47)
-    # a3 = range(47, 58)
-    # a4 = range(58, 69)
-    # a = a4
+    # a1 = range(1, 5)
+    # a2 = range(5, 9)
+    # a3 = range(9, 13)
+    # a4 = range(13, 16)
+    # a = a1
     # for i in a:
     #     logging.info(f"i={i}")
     #     get_gsa_by_brand_1(i)  # 爬取gsa
+    # 1.1单个关键词数据保持在一千以内
     # # 爬取2
     # while True:
     #     try:
