@@ -1326,6 +1326,57 @@ def get_gsa_by_url():
     sys.exit(0)
 
 
+def get_excel_to_mysql_gsa_detail(path):
+    data = get_data_by_excel(path, begin_row=1, cols=[6, 9, 10, 11, 12, 13, 14, 15, 19])
+    # sin, 6
+    # product_description, 9
+    # product_description2_strong, 10
+    # product_description2, 11
+    # gsa_advantage_price_1, 12
+    # gsa_advantage_price_2, 13
+    # gsa_advantage_price_3, 14
+    # coo, 15
+    # url, 19
+    # gsa_status  # 状态
+    sins = data[0]
+    product_descriptions = data[1]
+    product_description2_strongs = data[2]
+    product_description2s = data[3]
+    gsa_advantage_price_1s = data[4]
+    gsa_advantage_price_2s = data[5]
+    gsa_advantage_price_3s = data[6]
+    coos = data[7]
+    urls = data[8]
+    for i, url in enumerate(urls):
+        logging.info(f"{i}:{url}")
+        try:
+            gsa_obj = GSAGood.objects.get(url=url)
+            if gsa_obj.gsa_status:
+                continue
+
+            if len(product_descriptions[i]) >= 1000:
+                product_description = product_descriptions[i][0:1000]
+            else:
+                product_description = product_descriptions[i]
+            if len(product_description2s[i]) >= 1000:
+                product_description2 = product_description2s[i][0:1000]
+            else:
+                product_description2 = product_description2s[i]
+
+            gsa_obj.sin = sins[i]
+            gsa_obj.product_description = product_description
+            gsa_obj.product_description2_strong = product_description2_strongs[i]
+            gsa_obj.product_description2 = product_description2
+            gsa_obj.gsa_advantage_price_1 = gsa_advantage_price_1s[i]
+            gsa_obj.gsa_advantage_price_2 = gsa_advantage_price_2s[i]
+            gsa_obj.gsa_advantage_price_3 = gsa_advantage_price_3s[i]
+            gsa_obj.coo = coos[i]
+            gsa_obj.gsa_status = True
+            gsa_obj.save()
+        except GSAGood.DoesNotExist:
+            continue
+
+
 if __name__ == "__main__":
     pass
     # 爬取
