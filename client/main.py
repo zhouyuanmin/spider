@@ -853,9 +853,10 @@ def get_gsa_by_brand_2(b):
     browser = create_browser()
     # 2、内部爬取
     gsa_objs = GSAGood.objects.filter(gsa_status=False)
-    count = gsa_objs.count()
-    base = count // 4
-    gsa_objs = gsa_objs[base * (b - 1) : base * b]
+    if b:
+        count = gsa_objs.count()
+        base = count // 4
+        gsa_objs = gsa_objs[base * (b - 1) : base * b]
     for gas_obj in gsa_objs:
         logging.info(f"gas_obj.pk={gas_obj.pk}")
         if gas_obj.gsa_status:
@@ -1332,7 +1333,7 @@ if __name__ == "__main__":
     # # 爬取2
     while True:
         try:
-            get_gsa_by_brand_2(1)  # 爬取补充gsa
+            get_gsa_by_brand_2(0)  # 爬取补充gsa
         except Exception as e:
             logging.error(e)
         break
