@@ -1243,6 +1243,82 @@ def delete_gsa():
                 gsa_obj.delete()
 
 
+def get_gsa_by_url():
+    browser = create_browser()
+    key_urls = []
+    for key, url in key_urls:
+        brand = Brand.objects.get(key=key)
+        browser.get(url)
+        time.sleep(5)
+        waiting_to_load(browser)
+
+        global_search_label = browser.find_elements_by_xpath(
+            page_elements.get("search")
+        )
+        if global_search_label:
+            # 页面加载完成
+            product_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_list")
+            )
+            if not product_divs:  # 无数据了,则跳出
+                break
+            for product_div in product_divs:
+                source_divs = product_div.find_elements_by_xpath(
+                    page_elements.get("sources")
+                )
+                if not source_divs:  # 有些产品,没有sources
+                    continue
+                source_div = source_divs[0]
+                source = get_num(source_div.text)
+                if source >= brand.mini_sources:
+                    url_div = product_div.find_element_by_xpath(
+                        page_elements.get("item_a")
+                    )
+                    url = url_div.get_attribute("href")
+                    product_name = url_div.text
+                    mfr_name_div = product_div.find_element_by_xpath(
+                        page_elements.get("mfr_name")
+                    )
+                    manufacturer_name = mfr_name_div.text[4:].strip()
+                    # 厂家不包含关键词,则剔除
+                    key_str = brand.note
+                    keys = [_.lower() for _ in key_str.split(",")]
+                    status = False
+                    for key in keys:
+                        if key in manufacturer_name.lower():
+                            status = True
+                            break
+                    if not status:  # 厂家不包含关键词,则剔除
+                        continue
+                    mfr_part_no_gsa_div = product_div.find_element_by_xpath(
+                        page_elements.get("mfr_part_no_gsa")
+                    )
+                    mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
+                    try:
+                        objs = GSAGood.objects.filter(url=url)
+                        if objs:
+                            _obj = objs[0]
+                            _obj.brand_key = brand.key
+                            _obj.save()
+                            continue
+                        obj = GSAGood.objects.create(
+                            brand_key=brand.key,
+                            url=url,
+                            product_name=product_name,
+                            manufacturer_name=manufacturer_name,
+                            mfr_part_no_gsa=mfr_part_no_gsa,
+                            source=source,
+                        )
+                    except Exception as e:
+                        logging.error(e)
+        else:
+            # 页面加载失败
+            with open(f"{brand.key}_{i}.txt", "w+") as f:
+                f.write(f"{url}")
+    logging.info("get_gsa_by_url运行结束")
+    sys.exit(0)
+
+
 if __name__ == "__main__":
     # 爬取
     a1 = range(26, 36)
@@ -1256,7 +1332,7 @@ if __name__ == "__main__":
     # # 爬取2
     # while True:
     #     try:
-    #         get_gsa_by_brand_2(3)  # 爬取补充gsa
+    #         get_gsa_by_brand_2(2)  # 爬取补充gsa
     #     except Exception as e:
     #         logging.error(e)
     # for i in range(100):
@@ -1266,5 +1342,9 @@ if __name__ == "__main__":
     #     except Exception as e:
     #         logging.error(e)
     # # 导出
-    # export_by_brand(brand_name="Dell", process=True)
-    # export_by_brand(brand_name="Dell", process=False)
+    # export_by_brand(brand_name="HP", process=True)
+    # export_by_brand(brand_name="HP", process=False)
+    # export_by_brand(brand_name="cisco", process=False)
+    # export_by_brand(brand_name="LG", process=False)
+    # export_by_brand(brand_name="Samsung", process=False)
+    # export_by_brand(brand_name="Logitech", process=False)
