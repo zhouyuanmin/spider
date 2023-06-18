@@ -1321,6 +1321,7 @@ def get_gsa_by_url():
 
 
 if __name__ == "__main__":
+    pass
     # 爬取
     # a1 = range(26, 36)
     # a2 = range(36, 47)
@@ -1331,12 +1332,12 @@ if __name__ == "__main__":
     #     logging.info(f"i={i}")
     #     get_gsa_by_brand_1(i)  # 爬取gsa
     # # 爬取2
-    while True:
-        try:
-            get_gsa_by_brand_2(0)  # 爬取补充gsa
-        except Exception as e:
-            logging.error(e)
-        break
+    # while True:
+    #     try:
+    #         get_gsa_by_brand_2(0)  # 爬取补充gsa
+    #     except Exception as e:
+    #         logging.error(e)
+    #     break
     # for i in range(100):
     #     logging.info(f"i={i}")
     #     try:
@@ -1350,3 +1351,8 @@ if __name__ == "__main__":
     # export_by_brand(brand_name="LG", process=False)
     # export_by_brand(brand_name="Samsung", process=False)
     # export_by_brand(brand_name="Logitech", process=False)
+    # brands = Brand.objects.filter(pk__gte=26)
+    # for brand in brands:
+    #     key = brand.key
+    #     count = GSAGood.objects.filter(brand_key=key).count()
+    #     print(f"{key}:{count}")
