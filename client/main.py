@@ -1414,3 +1414,11 @@ if __name__ == "__main__":
     #     key = brand.key
     #     count = GSAGood.objects.filter(brand_key=key).count()
     #     print(f"{key}:{count}")
+    """
+    import datetime
+    now = datetime.datetime.now()
+    key = "HP Notebook"
+    count = GSAGood.objects.filter(brand_key=key,source__gte=7).count()
+    objs = GSAGood.objects.filter(brand_key=key,source__lte=6).update(delete_at=now)
+    count = GSAGood.objects.filter(brand_key=key,delete_at__isnull=True).count()
+    """
