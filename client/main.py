@@ -1313,7 +1313,7 @@ def get_gsa_by_url():
                         logging.error(e)
         else:
             # 页面加载失败
-            with open(f"{brand.key}_{i}.txt", "w+") as f:
+            with open(f"{brand.key}.txt", "w+") as f:
                 f.write(f"{url}")
     logging.info("get_gsa_by_url运行结束")
     sys.exit(0)
