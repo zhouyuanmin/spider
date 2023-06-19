@@ -950,9 +950,15 @@ def get_gsa_by_brand_2(b):
     browser.quit()
 
 
-def get_ec_by_brand(half=False, refresh=False):
-    browser_ec = login()
-    browser_inm = create_browser()
+def get_ec_by_brand(half=False, refresh=False, ec=True, inm=False):
+    if ec:
+        browser_ec = login()
+    else:
+        browser_ec = None
+    if inm:
+        browser_inm = create_browser()
+    else:
+        browser_inm = None
     if refresh:
         gsa_objs = GSAGood.objects.filter(
             sin="33411", gsa_status=True, delete_at__isnull=True
@@ -973,10 +979,14 @@ def get_ec_by_brand(half=False, refresh=False):
         ec_objs = ec_objs[begin:]
     for ec_obj in ec_objs:
         logging.info(f"ec_obj.pk={ec_obj.pk}")
-        get_model_param_by_ec(browser_ec, ec_obj.part)
-        get_model_param_by_inm(browser_inm, ec_obj.part)
-    browser_ec.quit()
-    browser_inm.quit()
+        if ec and browser_ec:
+            get_model_param_by_ec(browser_ec, ec_obj.part)
+        if inm and browser_inm:
+            get_model_param_by_inm(browser_inm, ec_obj.part)
+    if ec and browser_ec:
+        browser_ec.quit()
+    if inm and browser_inm:
+        browser_inm.quit()
 
 
 def export_by_brand_key(brand_name, brand_key, process=True):
@@ -1479,7 +1489,7 @@ if __name__ == "__main__":
     for i in range(100):
         logging.info(f"i={i}")
         try:
-            get_ec_by_brand(half=False, refresh=False)  # ec和inm
+            get_ec_by_brand(half=False, refresh=False, ec=True, inm=False)  # ec和inm
         except Exception as e:
             logging.error(e)
     # # 导出
