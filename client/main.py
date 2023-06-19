@@ -949,22 +949,27 @@ def get_gsa_by_brand_2(b):
     browser.quit()
 
 
-def get_ec_by_brand():
+def get_ec_by_brand(half=False, refresh=False):
     browser_ec = login()
     browser_inm = create_browser()
-    gsa_objs = GSAGood.objects.filter(
-        sin="33411", gsa_status=True, delete_at__isnull=True
-    )  # 有效数据
-    # 占位
-    for gas_obj in gsa_objs:
-        logging.info(f"gas_obj.pk={gas_obj.pk}")
-        try:
-            obj, _ = ECGood.objects.get_or_create(part=gas_obj.mfr_part_no_gsa)
-        except Exception as e:
-            logging.error(e)
+    if refresh:
+        gsa_objs = GSAGood.objects.filter(
+            sin="33411", gsa_status=True, delete_at__isnull=True
+        )  # 有效数据
+        # 占位
+        for gas_obj in gsa_objs:
+            logging.info(f"gas_obj.pk={gas_obj.pk}")
+            try:
+                obj, _ = ECGood.objects.get_or_create(part=gas_obj.mfr_part_no_gsa)
+            except Exception as e:
+                logging.error(e)
 
     # 爬取数据
     ec_objs = ECGood.objects.filter(ec_status=False)
+    if half:
+        count = ec_objs.count()
+        begin = count // 2
+        ec_objs = ec_objs[begin:]
     for ec_obj in ec_objs:
         logging.info(f"ec_obj.pk={ec_obj.pk}")
         get_model_param_by_ec(browser_ec, ec_obj.part)
