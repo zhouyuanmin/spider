@@ -1470,10 +1470,10 @@ def set_delete_gsa(i):
 if __name__ == "__main__":
     pass
     # 爬取
-    # a1 = range(1, 5)
-    # a2 = range(5, 9)
-    # a3 = range(9, 13)
-    # a4 = range(13, 16)
+    # a1 = range(41, 44)
+    # a2 = range(44, 47)
+    # a3 = range(47, 50)
+    # a4 = range(50, 53)
     # a = a1
     # for i in a:
     #     logging.info(f"i={i}")
