@@ -271,8 +271,9 @@ def get_model_param_by_ec(browser, part, manufacturer=""):
     # 判断是否需要登陆
     login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
     if login_buttons:
+        browser.quit()
         logging.error("重新登陆")
-        sys.exit(0)
+        raise  # 抛出异常
     # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
     url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
     browser.get(url)
@@ -1489,7 +1490,7 @@ if __name__ == "__main__":
     for i in range(100):
         logging.info(f"i={i}")
         try:
-            get_ec_by_brand(half=False, refresh=False, ec=True, inm=False)  # ec和inm
+            get_ec_by_brand(half=False, refresh=True, ec=True, inm=False)  # ec和inm
         except Exception as e:
             logging.error(e)
     # # 导出
