@@ -4,6 +4,7 @@ from pathlib import Path
 from io import StringIO
 import xlsxwriter
 import traceback
+import datetime
 import logging
 import random
 import xlrd
@@ -1430,6 +1431,31 @@ def get_excel_to_mysql_ec_detail(path):
             ec_obj.save()
 
 
+def set_delete_gsa(i):
+    brand_obj = Brand.objects.get(pk=i)
+    index = 1
+    while True:
+        count = GSAGood.objects.filter(
+            brand_key=brand_obj.key, delete_at__isnull=True
+        ).count()
+        if count <= 150:
+            break
+        elif count <= 200:
+            if index >= 8:
+                break
+        elif count <= 300:
+            if index >= 12:
+                break
+        else:
+            if index >= 15:
+                break
+        now = datetime.datetime.now()
+        objs = GSAGood.objects.filter(
+            brand_key=brand_obj.key, source__lte=index
+        ).update(delete_at=now)
+        index += 1
+
+
 if __name__ == "__main__":
     pass
     # 爬取
@@ -1443,18 +1469,19 @@ if __name__ == "__main__":
     #     get_gsa_by_brand_1(i)  # 爬取gsa
     # 1.1单个关键词数据保持在一千以内
     # # 爬取2
-    while True:
-        try:
-            get_gsa_by_brand_2(0)  # 爬取补充gsa
-        except Exception as e:
-            logging.error(e)
-        break
-    # for i in range(100):
-    #     logging.info(f"i={i}")
+    # while True:
     #     try:
-    #         get_ec_by_brand()  # ec和inm
+    #         get_gsa_by_brand_2(0)  # 爬取补充gsa
     #     except Exception as e:
     #         logging.error(e)
+    #     break
+    # 3.ec和inm
+    for i in range(100):
+        logging.info(f"i={i}")
+        try:
+            get_ec_by_brand(half=False, refresh=False)  # ec和inm
+        except Exception as e:
+            logging.error(e)
     # # 导出
     # export_by_brand(brand_name="HP", process=True)
     # export_by_brand(brand_name="HP", process=False)
