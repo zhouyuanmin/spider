@@ -864,7 +864,7 @@ def get_gsa_by_brand_2(b):
         if gas_obj.gsa_status:
             continue  # 爬取过
         browser.get(gas_obj.url)
-        time.sleep(5)
+        time.sleep(3)
         waiting_to_load(browser)
 
         # 增加判断是否需要邮编,有则跳过
