@@ -909,6 +909,9 @@ def get_gsa_by_brand_2(b):
             else:
                 _product_description = ""
             product_description2 = _product_description
+
+            if len(product_description) >= 1000:
+                product_description = product_description[0:1000]
             if len(product_description2) >= 1000:
                 product_description2 = product_description2[0:1000]
 
@@ -1437,7 +1440,7 @@ if __name__ == "__main__":
     # # 爬取2
     while True:
         try:
-            get_gsa_by_brand_2(1)  # 爬取补充gsa
+            get_gsa_by_brand_2(0)  # 爬取补充gsa
         except Exception as e:
             logging.error(e)
         break
