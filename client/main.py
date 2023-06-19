@@ -974,6 +974,8 @@ def get_ec_by_brand(half=False, refresh=False, ec=True, inm=False):
 
     # 爬取数据
     ec_objs = ECGood.objects.filter(ec_status=False)
+    if not ec_objs:
+        sys.exit(0)
     if half:
         count = ec_objs.count()
         begin = count // 2
@@ -1490,7 +1492,7 @@ if __name__ == "__main__":
     for i in range(100):
         logging.info(f"i={i}")
         try:
-            get_ec_by_brand(half=False, refresh=True, ec=True, inm=False)  # ec和inm
+            get_ec_by_brand(half=False, refresh=False, ec=True, inm=False)  # ec和inm
         except Exception as e:
             logging.error(e)
     # # 导出
