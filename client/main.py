@@ -13,6 +13,7 @@ import time
 import sys
 import os
 import re
+from openpyxl import load_workbook
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
@@ -1469,49 +1470,52 @@ def set_delete_gsa(i):
         index += 1
 
 
+def delete_excel_rows(file_path, sheet_name, rows, d):
+    # 加载Excel文件
+    wb = load_workbook(file_path)
+
+    # 选择工作表
+    sheet = wb[sheet_name]
+
+    # 删除指定行
+    print(len(rows))
+    for i, row in enumerate(rows):
+        sheet.delete_rows(
+            row, d.get(row)
+        )  # sheet.delete_rows(idx=3,amount=2) #第三行位置开始删除两行
+        # 所以需要倒着删除
+        print(i, row, d.get(row))
+
+    # 保存修改后的文件
+    wb.save("2.xlsx")
+
+
 if __name__ == "__main__":
     pass
-    # 爬取
-    # a1 = range(41, 44)
-    # a2 = range(44, 47)
-    # a3 = range(47, 50)
-    # a4 = range(50, 53)
-    # a = a1
-    # for i in a:
-    #     logging.info(f"i={i}")
-    #     get_gsa_by_brand_1(i)  # 爬取gsa
-    # 1.1单个关键词数据保持在一千以内
-    # # 爬取2
-    # while True:
-    #     try:
-    #         get_gsa_by_brand_2(0)  # 爬取补充gsa
-    #     except Exception as e:
-    #         logging.error(e)
-    #     break
-    # 3.ec和inm
-    for i in range(100):
-        logging.info(f"i={i}")
-        try:
-            get_ec_by_brand(half=False, refresh=False, ec=True, inm=False)  # ec和inm
-        except Exception as e:
-            logging.error(e)
-    # # 导出
-    # export_by_brand(brand_name="HP", process=True)
-    # export_by_brand(brand_name="HP", process=False)
-    # export_by_brand(brand_name="cisco", process=False)
-    # export_by_brand(brand_name="LG", process=False)
-    # export_by_brand(brand_name="Samsung", process=False)
-    # export_by_brand(brand_name="Logitech", process=False)
-    # brands = Brand.objects.filter(pk__gte=26)
-    # for brand in brands:
-    #     key = brand.key
-    #     count = GSAGood.objects.filter(brand_key=key).count()
-    #     print(f"{key}:{count}")
-    """
-    import datetime
-    now = datetime.datetime.now()
-    key = "HP Notebook"
-    count = GSAGood.objects.filter(brand_key=key,source__gte=7).count()
-    objs = GSAGood.objects.filter(brand_key=key,source__lte=6).update(delete_at=now)
-    count = GSAGood.objects.filter(brand_key=key,delete_at__isnull=True).count()
-    """
+    data = get_data_by_excel("/Users/myard/Desktop/1.xlsx", 1, [24])
+    ls = data[0]
+    s = set()
+    index = []
+    for i, f in enumerate(ls, 2):
+        if f in s:
+            index.append(i)
+        else:
+            s.add(f)
+
+    d = {}
+    tmp = [-1]
+    for i in index:
+        if i == tmp[-1] + 1:
+            d[tmp[0]] += 1
+            tmp.append(i)
+        else:
+            d[i] = 1
+            tmp = [i]
+    print(d)
+    _index = list(d.keys())
+    _index.sort(reverse=True)
+    # print(index)
+    delete_excel_rows(
+        "/Users/myard/Desktop/1.xlsx", "PRODUCTSwDISCOUNT (B)-Changes", _index, d
+    )
+    print("完成")
