@@ -29,7 +29,7 @@ logging.basicConfig(
 
 # 全局配置信息
 base_dir = Path(__file__).resolve().parent
-proxy = "http://127.0.0.1:4780"  # 4,5,6,7
+proxy = "http://127.0.0.1:7780"  # 4,5,6,7
 window_width, window_height = (1250, 900)  # 需要根据分辨率来确定窗口大小
 cookies_path = os.path.join(base_dir, "cookies.txt")
 login_email = "lwang@techfocusUSA.com"
@@ -1491,6 +1491,7 @@ def delete_excel_rows(file_path, sheet_name, rows, d):
 
 
 def get_url_by_key(browser, obj):
+    logging.info(obj.pk)
     url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{obj.key}&db=0&searchType=0"
     browser.get(url)
     time.sleep(5)
