@@ -19,7 +19,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spider.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-from goods.models import Brand, ECGood, GSAGood
+from goods.models import Brand, ECGood, GSAGood, GSAGood500
 
 # 日志配置
 logging.basicConfig(
@@ -234,7 +234,7 @@ def get_data(path, begin_line=0, count=None, part_line=1, manufacturer_line=2):
 
 def get_data_by_excel(path, begin_row, cols):
     excel_data = xlrd.open_workbook(filename=path)
-    table = excel_data.sheets()[0]  # 第一个table
+    table = excel_data.sheets()[2]  # 第一个table
     data = []
     for i in cols:
         data.append(table.col_values(i)[begin_row:])
@@ -1490,32 +1490,58 @@ def delete_excel_rows(file_path, sheet_name, rows, d):
     wb.save("2.xlsx")
 
 
+def get_url_by_key(browser, obj):
+    url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{obj.key}&db=0&searchType=0"
+    browser.get(url)
+    time.sleep(5)
+    waiting_to_load(browser)
+
+    product_divs = browser.find_elements_by_xpath(page_elements.get("product_list"))
+    if product_divs:
+        pass
+    else:
+        # 判断页面是否加载完成
+        search_divs = browser.find_elements_by_xpath(page_elements.get("search"))
+        if search_divs:
+            product_divs = browser.find_elements_by_xpath(
+                page_elements.get("product_list")
+            )
+            if not product_divs:
+                return {}
+        else:
+            return {}
+
+    if product_divs:
+        valid_source_urls = []
+        first_source_urls = []
+        for product_div in product_divs:
+            source_divs = product_div.find_elements_by_xpath(
+                page_elements.get("sources")
+            )
+            if not source_divs:  # 有些产品,没有sources
+                continue
+            source_div = product_div.find_element_by_xpath(page_elements.get("sources"))
+            source = get_num(source_div.text)
+            url_div = product_div.find_element_by_xpath(page_elements.get("item_a"))
+            url = url_div.get_attribute("href")
+            if source >= 1:
+                valid_source_urls.append([source, url])
+            elif not first_source_urls:
+                first_source_urls.append([source, url])
+        # 排序,取前1
+        valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
+        if len(valid_source_urls) > 1:
+            valid_source_urls = valid_source_urls[0:1]
+
+        if not valid_source_urls:  # 如果没有符合要求的,则采集第一个产品
+            valid_source_urls = first_source_urls
+
+        valid_source_url = valid_source_urls[0]
+        obj.source = valid_source_url[0]
+        obj.url = valid_source_url[1]
+        obj.gsa_status = True
+        obj.save()
+
+
 if __name__ == "__main__":
     pass
-    data = get_data_by_excel("/Users/myard/Desktop/1.xlsx", 1, [24])
-    ls = data[0]
-    s = set()
-    index = []
-    for i, f in enumerate(ls, 2):
-        if f in s:
-            index.append(i)
-        else:
-            s.add(f)
-
-    d = {}
-    tmp = [-1]
-    for i in index:
-        if i == tmp[-1] + 1:
-            d[tmp[0]] += 1
-            tmp.append(i)
-        else:
-            d[i] = 1
-            tmp = [i]
-    print(d)
-    _index = list(d.keys())
-    _index.sort(reverse=True)
-    # print(index)
-    delete_excel_rows(
-        "/Users/myard/Desktop/1.xlsx", "PRODUCTSwDISCOUNT (B)-Changes", _index, d
-    )
-    print("完成")
