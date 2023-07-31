@@ -1544,4 +1544,13 @@ def get_url_by_key(browser, obj):
 
 
 if __name__ == "__main__":
-    pass
+    browser = create_browser()
+    objs = GSAGood500.objects.filter(gsa_status__isnull=True)
+    if "4780" in proxy:
+        objs = objs[0:5000]
+    elif "5780" in proxy:
+        objs = objs[5000:10000]
+    elif "7780" in proxy:
+        objs = objs[10000:15000]
+    for obj in objs:
+        get_url_by_key(browser, obj)
