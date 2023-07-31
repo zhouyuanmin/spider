@@ -91,3 +91,10 @@ class GSAGood(BaseModel):
 
     class Meta:
         unique_together = ["brand_key", "url"]
+
+
+class GSAGood500(BaseModel):
+    key = models.CharField(max_length=255, blank=True, default="")
+    url = models.CharField(max_length=255, blank=True, default="", verbose_name="url")
+    source = models.IntegerField(verbose_name="source")
+    gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
