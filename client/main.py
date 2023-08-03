@@ -1544,14 +1544,41 @@ def get_url_by_key(browser, obj):
         obj.save()
 
 
+def export_by_excel():
+    # data_all = get_data_by_excel(
+    #     "/Users/myard/Downloads/Refresh 16 Add PPT07-26-23-14924Products.xlsx",
+    #     begin_row=1,
+    #     cols=range(0, 26),
+    # )
+    data_first = get_data_by_excel(
+        "/Users/myard/Downloads/Revised Refresh 16 Add PPT 07-21-23_5969Products.xlsx",
+        begin_row=1,
+        cols=range(6, 7),
+    )
+    mfr_part_nos = data_first[0]
+    old_mfr_part_no_set = set(mfr_part_nos)
+    # old_mfr_part_no_set = set()
+
+    data = []
+    excel_data = xlrd.open_workbook(
+        filename="/Users/myard/Downloads/Refresh 16 Add PPT- items that were not approvedMichelle.xlsx"
+    )
+    table = excel_data.sheets()[2]  # 第一个table
+    for i in range(1, 2281):
+        row = table.row_values(i)
+        mfr_part_no = row[6]
+        if mfr_part_no in old_mfr_part_no_set:
+            continue
+        else:
+            obj = GSAGood500.objects.filter(key=mfr_part_no).first()
+            url = obj.url
+            source = obj.source
+            row.append(url)
+            row.append(source)
+            data.append(row)
+
+    save_data_to_excel("1.xlsx", data)
+
+
 if __name__ == "__main__":
-    browser = create_browser()
-    objs = GSAGood500.objects.filter(gsa_status__isnull=True)
-    if "4780" in proxy:
-        objs = objs[0:5000]
-    elif "5780" in proxy:
-        objs = objs[5000:10000]
-    elif "7780" in proxy:
-        objs = objs[10000:15000]
-    for obj in objs:
-        get_url_by_key(browser, obj)
+    export_by_excel()
