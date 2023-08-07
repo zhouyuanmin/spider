@@ -94,7 +94,14 @@ class GSAGood(BaseModel):
 
 
 class GSAGood500(BaseModel):
-    key = models.CharField(max_length=255, blank=True, default="")
+    key = models.CharField(max_length=255, blank=True, default="", unique=True)
     url = models.CharField(max_length=255, blank=True, default="", verbose_name="url")
     source = models.IntegerField(verbose_name="source")
     gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
+    msrp = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, verbose_name="制造商建议零售价"
+    )
+    federal_govt_spa = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, verbose_name="联邦政府价格"
+    )
+    ec_status = models.BooleanField(null=True, default=False, verbose_name="EC爬取状态")
