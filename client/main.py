@@ -1,4 +1,5 @@
 from selenium.common import exceptions
+from multiprocessing import Process
 from selenium import webdriver
 from pathlib import Path
 from io import StringIO
@@ -117,7 +118,9 @@ def get_driver():
     return driver
 
 
-def create_browser():
+def create_browser(_proxy=None):
+    if _proxy:
+        proxy = _proxy
     global window_width
     global window_height
     options = webdriver.ChromeOptions()
@@ -1525,10 +1528,16 @@ def get_url_by_key(browser, obj):
             source = get_num(source_div.text)
             url_div = product_div.find_element_by_xpath(page_elements.get("item_a"))
             url = url_div.get_attribute("href")
+            mfr_part_no_gsa_div = product_div.find_element_by_xpath(
+                page_elements.get("mfr_part_no_gsa")
+            )
+            mfr_part_no_gsa = mfr_part_no_gsa_div.text.strip()
+            if obj.key != mfr_part_no_gsa:  # 再次检验
+                continue
             if source >= 1:
-                valid_source_urls.append([source, url])
+                valid_source_urls.append([source, url, mfr_part_no_gsa])
             elif not first_source_urls:
-                first_source_urls.append([source, url])
+                first_source_urls.append([source, url, mfr_part_no_gsa])
         # 排序,取前1
         valid_source_urls = sorted(valid_source_urls, key=lambda x: x[0], reverse=True)
         if len(valid_source_urls) > 1:
@@ -1541,6 +1550,7 @@ def get_url_by_key(browser, obj):
         obj.source = valid_source_url[0]
         obj.url = valid_source_url[1]
         obj.gsa_status = True
+        obj.mfr_part_no = valid_source_url[2]
         obj.save()
 
 
@@ -1588,6 +1598,42 @@ def excel_to_mysql(path="/Users/myard/Desktop/wlj.xlsx"):
         GSAGood500.objects.get_or_create(key=_)
 
 
+def spider_gsa_advantage(proxy="http://127.0.0.1:4780"):
+    browser = create_browser(_proxy=proxy)
+    objs = GSAGood500.objects.filter(gsa_status__isnull=True)
+    count = objs.count()
+    count_1 = count // 3
+    count_2 = count_1 * 2
+    if "4780" in proxy:
+        objs = objs[0:count_1]
+    elif "5780" in proxy:
+        objs = objs[count_1:count_2]
+    elif "7780" in proxy:
+        objs = objs[count_2:]
+    for obj in objs:
+        get_url_by_key(browser, obj)
+
+
+def spider_gsa_advantage_proc(debug):
+    proxies = [
+        "http://127.0.0.1:4780",
+        "http://127.0.0.1:5780",
+        "http://127.0.0.1:7780",
+    ]
+
+    processes = []
+    for i, proxy in enumerate(proxies):
+        if debug:
+            spider_gsa_advantage(proxy=proxy)
+        proc = Process(name=f"{i}", target=spider_gsa_advantage, args=(proxy,))
+        processes.append(proc)
+        proc.start()
+        time.sleep(3)
+
+
 if __name__ == "__main__":
-    excel_to_mysql()
+    # excel_to_mysql()
+    # spider_gsa_advantage("http://127.0.0.1:4780")
+    # spider_gsa_advantage("http://127.0.0.1:5780")
+    # spider_gsa_advantage("http://127.0.0.1:7780")
     pass
