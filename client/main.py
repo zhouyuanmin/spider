@@ -118,9 +118,7 @@ def get_driver():
     return driver
 
 
-def create_browser(_proxy=None):
-    if _proxy:
-        proxy = _proxy
+def create_browser(proxy="http://127.0.0.1:4780"):
     global window_width
     global window_height
     options = webdriver.ChromeOptions()
@@ -1599,7 +1597,7 @@ def excel_to_mysql(path="/Users/myard/Desktop/wlj.xlsx"):
 
 
 def spider_gsa_advantage(proxy="http://127.0.0.1:4780"):
-    browser = create_browser(_proxy=proxy)
+    browser = create_browser(proxy)
     objs = GSAGood500.objects.filter(gsa_status__isnull=True)
     count = objs.count()
     count_1 = count // 3
@@ -1631,9 +1629,80 @@ def spider_gsa_advantage_proc(debug):
         time.sleep(3)
 
 
+def get_data_by_key(browser, obj):
+    """自带更新操作"""
+    # 判断是否需要登陆
+    login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
+    if login_buttons:
+        browser.quit()
+        logging.error("重新登陆")
+        raise  # 抛出异常
+    # 搜索与排序:PriceType=FederalGovtSPA,SortBy=Price(LowToHigh)
+    part = obj.key
+    url = f"https://ec.synnex.com/ecx/part/searchResult.html?begin=0&offset=20&keyword={part}&sortField=reference_price&spaType=FG"
+    browser.get(url)
+    time.sleep(5)
+    waiting_to_load(browser)
+
+    # 最低价产品(第一个)
+    product_items = browser.find_elements_by_xpath(page_elements.get("product_items"))
+    if product_items:
+        msrp_divs = browser.find_elements_by_xpath(page_elements.get("msrp"))
+        if not msrp_divs:
+            time.sleep(3)
+            msrp_divs = browser.find_elements_by_xpath(page_elements.get("msrp"))
+        if msrp_divs:
+            msrp = get_dollar(msrp_divs[0].text)
+        else:
+            # save_error_screenshot(browser, "ec", f"{part}_msrp")
+            msrp = 0
+
+        federal_govt_spa_divs = browser.find_elements_by_xpath(
+            page_elements.get("price_info")
+        )
+        if not federal_govt_spa_divs:
+            time.sleep(3)
+            federal_govt_spa_divs = browser.find_elements_by_xpath(
+                page_elements.get("price_info")
+            )
+        if federal_govt_spa_divs:
+            federal_govt_spa = get_dollar(federal_govt_spa_divs[0].text)
+        else:
+            federal_govt_spa = 0
+
+        # 直接处理
+        obj.msrp = msrp
+        obj.federal_govt_spa = federal_govt_spa
+        obj.ec_status = True
+        obj.save()
+    else:
+        # 无产品
+        tbody = browser.find_elements_by_xpath(page_elements.get("tbody"))
+        if tbody:  # 页面正常
+            text = tbody[0].text
+            if "Your search found no result." in text or "product in this page" in text:
+                try:
+                    obj.ec_status = True
+                    obj.save()
+                except GSAGood500.DoesNotExist:
+                    pass
+                except:
+                    pass
+        else:  # 页面异常
+            return {}
+
+
+def spider_synnex():
+    browser = login()
+    objs = GSAGood500.objects.filter(ec_status__isnull=True)
+    for obj in objs:
+        get_data_by_key(browser, obj)
+
+
 if __name__ == "__main__":
     # excel_to_mysql()
     # spider_gsa_advantage("http://127.0.0.1:4780")
     # spider_gsa_advantage("http://127.0.0.1:5780")
     # spider_gsa_advantage("http://127.0.0.1:7780")
+    # spider_synnex()
     pass
