@@ -1544,7 +1544,12 @@ def get_url_by_key(browser, obj):
         if not valid_source_urls:  # 如果没有符合要求的,则采集第一个产品
             valid_source_urls = first_source_urls
 
-        valid_source_url = valid_source_urls[0]
+        try:
+            valid_source_url = valid_source_urls[0]
+        except Exception:  # 处理数据异常
+            obj.gsa_status = False
+            obj.save()
+            return
         obj.source = valid_source_url[0]
         obj.url = valid_source_url[1]
         obj.gsa_status = True
@@ -1711,5 +1716,5 @@ if __name__ == "__main__":
     # spider_gsa_advantage("http://127.0.0.1:4780")
     # spider_gsa_advantage("http://127.0.0.1:5780")
     # spider_gsa_advantage("http://127.0.0.1:7780")
-    spider_synnex()
+    # spider_synnex()
     pass
