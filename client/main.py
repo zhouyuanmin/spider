@@ -1637,6 +1637,7 @@ def spider_gsa_advantage_proc(debug):
 
 def get_data_by_key(browser, obj):
     """自带更新操作"""
+    logging.info(obj.pk)
     # 判断是否需要登陆
     login_buttons = browser.find_elements_by_xpath(page_elements.get("login_email"))
     if login_buttons:
@@ -1710,5 +1711,5 @@ if __name__ == "__main__":
     # spider_gsa_advantage("http://127.0.0.1:4780")
     # spider_gsa_advantage("http://127.0.0.1:5780")
     # spider_gsa_advantage("http://127.0.0.1:7780")
-    # spider_synnex()
+    spider_synnex()
     pass
