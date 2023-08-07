@@ -232,9 +232,9 @@ def get_data(path, begin_line=0, count=None, part_line=1, manufacturer_line=2):
     return zipped
 
 
-def get_data_by_excel(path, begin_row, cols):
+def get_data_by_excel(path, begin_row, cols, table):
     excel_data = xlrd.open_workbook(filename=path)
-    table = excel_data.sheets()[2]  # 第一个table
+    table = excel_data.sheets()[table]  # 第一个table
     data = []
     for i in cols:
         data.append(table.col_values(i)[begin_row:])
@@ -1580,5 +1580,13 @@ def export_by_excel():
     save_data_to_excel("1.xlsx", data)
 
 
+def excel_to_mysql(path="/Users/myard/Desktop/wlj.xlsx"):
+    _data = get_data_by_excel(path, begin_row=1, cols=[5], table=0)
+    mpns = _data[0]
+    mpns_set = set(mpns)
+    for _ in mpns_set:
+        GSAGood500.objects.get_or_create(key=_)
+
+
 if __name__ == "__main__":
-    export_by_excel()
+    pass
