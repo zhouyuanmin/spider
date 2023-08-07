@@ -104,4 +104,4 @@ class GSAGood500(BaseModel):
     federal_govt_spa = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name="联邦政府价格"
     )
-    ec_status = models.BooleanField(null=True, default=False, verbose_name="EC爬取状态")
+    ec_status = models.BooleanField(null=True, verbose_name="EC爬取状态")
