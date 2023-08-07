@@ -1590,8 +1590,13 @@ def export_by_excel():
 
 def excel_to_mysql(path="/Users/myard/Desktop/wlj.xlsx"):
     _data = get_data_by_excel(path, begin_row=1, cols=[5], table=0)
-    mpns = _data[0]
-    mpns = [str(int(_)) for _ in mpns]  # 处理字符串变成数字的问题
+    _mpns = _data[0]
+    mpns = []
+    for _ in _mpns:  # 处理字符串变成数字的问题
+        if isinstance(_, float):
+            mpns.append(str(int(_)))
+        else:
+            mpns.append(_)
     mpns_set = set(mpns)
     for _ in mpns_set:
         GSAGood500.objects.get_or_create(key=_)
