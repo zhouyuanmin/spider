@@ -232,7 +232,7 @@ def get_data(path, begin_line=0, count=None, part_line=1, manufacturer_line=2):
     return zipped
 
 
-def get_data_by_excel(path, begin_row, cols, table):
+def get_data_by_excel(path, begin_row, cols, table=0):
     excel_data = xlrd.open_workbook(filename=path)
     table = excel_data.sheets()[table]  # 第一个table
     data = []
@@ -1589,4 +1589,5 @@ def excel_to_mysql(path="/Users/myard/Desktop/wlj.xlsx"):
 
 
 if __name__ == "__main__":
+    excel_to_mysql()
     pass
