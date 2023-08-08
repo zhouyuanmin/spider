@@ -1717,4 +1717,17 @@ if __name__ == "__main__":
     # spider_gsa_advantage("http://127.0.0.1:5780")
     # spider_gsa_advantage("http://127.0.0.1:7780")
     # spider_synnex()
+    for i in range(10):
+        try:
+            # excel_to_mysql()
+            # spider_gsa_advantage("http://127.0.0.1:4780")
+            # spider_gsa_advantage("http://127.0.0.1:5780")
+            # spider_gsa_advantage("http://127.0.0.1:7780")
+            # spider_synnex()
+            pass
+        except Exception as e:
+            logging.error(e)
+        else:
+            logging.info("任务完成")
+            break
     pass
