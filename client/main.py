@@ -1704,9 +1704,9 @@ def get_data_by_key(browser, obj):
             return {}
 
 
-def spider_synnex():
+def spider_synnex(order="pk"):
     browser = login()
-    objs = GSAGood500.objects.filter(ec_status__isnull=True)
+    objs = GSAGood500.objects.filter(ec_status__isnull=True).order_by(order)
     for obj in objs:
         get_data_by_key(browser, obj)
 
@@ -1723,7 +1723,8 @@ if __name__ == "__main__":
             # spider_gsa_advantage("http://127.0.0.1:4780")
             # spider_gsa_advantage("http://127.0.0.1:5780")
             # spider_gsa_advantage("http://127.0.0.1:7780")
-            # spider_synnex()
+            # spider_synnex("pk")
+            # spider_synnex("-pk")
             pass
         except Exception as e:
             logging.error(e)
