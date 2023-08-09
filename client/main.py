@@ -1692,7 +1692,7 @@ def get_data_by_key(browser, obj):
         tbody = browser.find_elements_by_xpath(page_elements.get("tbody"))
         if tbody:  # 页面正常
             text = tbody[0].text
-            if "Your search found no result." in text or "product in this page" in text:
+            if "Your search found no result." in text or "in this page" in text:
                 try:
                     obj.ec_status = True
                     obj.save()
