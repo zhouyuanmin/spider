@@ -1768,6 +1768,16 @@ if __name__ == "__main__":
             # spider_synnex("pk")
             # spider_synnex("-pk")
             # export_by_key("/Users/myard/Desktop/wlj.xlsx", 0, 1, 14924, 5, None)
+            # export_by_key("/Users/myard/Desktop/Revised Refresh 16 Add PPT 07-21-23_5969Products.xlsx", 2, 1, 5969, 6, None)
+
+            # data_first = get_data_by_excel(
+            #     "/Users/myard/Desktop/Revised Refresh 16 Add PPT 07-21-23_5969Products.xlsx",
+            #     begin_row=1,
+            #     cols=range(6, 7),
+            #     table=2,
+            # )
+            # data = data_first[0]
+            # export_by_key("/Users/myard/Desktop/wlj.xlsx", 0, 1, 14924, 5, data)
             pass
         except Exception as e:
             logging.error(e)
