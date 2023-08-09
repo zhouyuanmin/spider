@@ -1711,6 +1711,48 @@ def spider_synnex(order="pk"):
         get_data_by_key(browser, obj)
 
 
+def export_by_key(path, table, begin_row, end_row, key_col, ex=None):
+    """[begin_row,end_row)"""
+    old_mpn_set = set()
+    if ex:
+        old_mpn_set.update(ex)
+
+    data = []
+    excel_data = xlrd.open_workbook(filename=path)
+    table = excel_data.sheets()[table]
+    for i in range(begin_row, end_row):
+        row = table.row_values(i)
+
+        # 处理字符串误识别成浮点数的情况
+        for j in range(len(row)):
+            _ = row[j]
+            if isinstance(_, float):
+                _str = str(_)
+                if _str.endswith(".0"):
+                    _ = str(int(_))
+                    row[j] = _
+
+        mfr_part_no = row[key_col]
+        if mfr_part_no in old_mpn_set:
+            continue
+        else:
+            old_mpn_set.add(mfr_part_no)
+            obj = GSAGood500.objects.filter(
+                key=mfr_part_no, delete_at__isnull=True
+            ).first()
+            if not obj:
+                continue
+            row.append(obj.url)
+            row.append(obj.source)
+            row.append(obj.msrp)
+            row.append(obj.federal_govt_spa)
+            data.append(row)
+
+    save_data_to_excel(
+        f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}.xlsx", data
+    )
+
+
 if __name__ == "__main__":
     # excel_to_mysql()
     # spider_gsa_advantage("http://127.0.0.1:4780")
@@ -1725,6 +1767,7 @@ if __name__ == "__main__":
             # spider_gsa_advantage("http://127.0.0.1:7780")
             # spider_synnex("pk")
             # spider_synnex("-pk")
+            # export_by_key("/Users/myard/Desktop/wlj.xlsx", 0, 1, 14924, 5, None)
             pass
         except Exception as e:
             logging.error(e)
