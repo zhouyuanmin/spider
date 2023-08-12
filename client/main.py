@@ -1753,6 +1753,26 @@ def export_by_key(path, table, begin_row, end_row, key_col, ex=None):
     )
 
 
+def get_price_by_url(browser, obj):
+    pass
+
+
+def spider_gsa_advantage_by_url(proxy="http://127.0.0.1:4780"):
+    browser = create_browser(proxy)
+    objs = GSAGood500.objects.filter(gsa_price_status__isnull=True)
+    count = objs.count()
+    count_1 = count // 3
+    count_2 = count_1 * 2
+    if "4780" in proxy:
+        objs = objs[0:count_1]
+    elif "5780" in proxy:
+        objs = objs[count_1:count_2]
+    elif "7780" in proxy:
+        objs = objs[count_2:]
+    for obj in objs:
+        get_price_by_url(browser, obj)
+
+
 if __name__ == "__main__":
     # excel_to_mysql()
     # spider_gsa_advantage("http://127.0.0.1:4780")
@@ -1778,6 +1798,10 @@ if __name__ == "__main__":
             # )
             # data = data_first[0]
             # export_by_key("/Users/myard/Desktop/wlj.xlsx", 0, 1, 14924, 5, data)
+
+            # spider_gsa_advantage_by_url("http://127.0.0.1:4780")
+            # spider_gsa_advantage_by_url("http://127.0.0.1:5780")
+            # spider_gsa_advantage_by_url("http://127.0.0.1:7780")
             pass
         except Exception as e:
             logging.error(e)
