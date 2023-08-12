@@ -106,3 +106,13 @@ class GSAGood500(BaseModel):
         max_digits=10, decimal_places=2, default=0, verbose_name="联邦政府价格"
     )
     ec_status = models.BooleanField(null=True, verbose_name="EC爬取状态")
+    gsa_advantage_price_1 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格1"
+    )  # gsa网页上的
+    gsa_advantage_price_2 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格2"
+    )  # gsa网页上的
+    gsa_advantage_price_3 = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, default=0, verbose_name="GSA优势价格3"
+    )  # gsa网页上的
+    gsa_price_status = models.BooleanField(null=True, verbose_name="GSA价格爬取状态")
