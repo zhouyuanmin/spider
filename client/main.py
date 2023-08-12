@@ -1790,7 +1790,9 @@ def get_price_by_url(browser, gas_obj):
 
 def spider_gsa_advantage_by_url(proxy="http://127.0.0.1:4780"):
     browser = create_browser(proxy)
-    objs = GSAGood500.objects.filter(gsa_price_status__isnull=True)
+    objs = GSAGood500.objects.filter(
+        gsa_price_status__isnull=True, delete_at__isnull=True
+    )
     count = objs.count()
     count_1 = count // 3
     count_2 = count_1 * 2
