@@ -1753,8 +1753,39 @@ def export_by_key(path, table, begin_row, end_row, key_col, ex=None):
     )
 
 
-def get_price_by_url(browser, obj):
-    pass
+def get_price_by_url(browser, gas_obj):
+    if gas_obj.gsa_price_status:
+        return None  # 爬取过
+    browser.get(gas_obj.url)
+    time.sleep(3)
+    waiting_to_load(browser)
+
+    # 增加判断是否需要邮编,有则跳过
+    zip_div = browser.find_elements_by_xpath(page_elements.get("zip"))
+    if zip_div:
+        gas_obj.gsa_status = True
+        gas_obj.save()
+        return None
+
+    global_search_label = browser.find_elements_by_xpath(page_elements.get("search"))
+    if global_search_label:
+        # 页面加载完成
+        gsa_advantage_price_divs = browser.find_elements_by_xpath(
+            page_elements.get("gsa_advantage_price")
+        )[1:]
+        gsa_advantage_prices = [0, 0, 0]
+        for i, div in enumerate(gsa_advantage_price_divs):
+            if i >= 3:  # 0,1,2
+                break
+            text = div.text
+            if "$" in text:
+                gsa_advantage_prices[i] = get_dollar(text)
+        # 添加数据
+        gas_obj.gsa_advantage_price_1 = gsa_advantage_prices[0]
+        gas_obj.gsa_advantage_price_2 = gsa_advantage_prices[1]
+        gas_obj.gsa_advantage_price_3 = gsa_advantage_prices[2]
+        gas_obj.gsa_price_status = True
+        gas_obj.save()
 
 
 def spider_gsa_advantage_by_url(proxy="http://127.0.0.1:4780"):
