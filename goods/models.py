@@ -139,3 +139,27 @@ class GSAGood(BaseModel):
     gsa_status = models.BooleanField(null=True, verbose_name="GSA爬取状态")
     url = models.CharField(max_length=255, blank=True, default="", verbose_name="url")
     source = models.IntegerField(verbose_name="source")
+
+
+class OrderFilled(BaseModel):
+    """成交单"""
+
+    contractor_name = models.CharField(max_length=255, default="", verbose_name="承包商名称")
+    contract_number = models.CharField(max_length=255, default="", verbose_name="合同编号")
+    mfr_part_number = models.CharField(max_length=255, default="", verbose_name="零件号")
+    item_name = models.CharField(max_length=255, default="", verbose_name="物品名称")
+    mfr_name = models.CharField(max_length=255, default="", verbose_name="制造商名称")
+    date = models.DateTimeField(null=True, default=None, verbose_name="下单时间")
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="单价",
+    )
+    quantity = models.IntegerField(default=0, verbose_name="数量")
+    extended_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="总价",
+    )
