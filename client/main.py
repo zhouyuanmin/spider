@@ -4,6 +4,7 @@ from pathlib import Path
 from io import StringIO
 import xlsxwriter
 import traceback
+import datetime
 import logging
 import random
 import xlrd
@@ -18,6 +19,7 @@ from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
 from goods.models import Good, ECGood, GSAGood
+from goods import models
 
 # 日志配置
 logging.basicConfig(
@@ -786,8 +788,33 @@ def export(path, begin_row, begin_col, end_col, part_col, process=True):
     save_data_to_excel("_done_未筛选.xlsx", data)
 
 
+def import_order_filled(path, begin_row, begin_col, end_col):
+    cols = list(range(begin_col, end_col + 1))
+    excel_data = get_data_by_excel(path, begin_row, cols)
+    parts = excel_data[2]
+    data = []
+    for i, part in enumerate(parts):
+        row_data = []
+        for item in excel_data:
+            row_data.append(item[i])
+        data.append(row_data)
+    for _ in data:
+        models.OrderFilled.objects.create(
+            contractor_name=_[0],
+            contract_number=_[1],
+            mfr_part_number=_[2],
+            item_name=_[3],
+            mfr_name=_[4],
+            date=datetime.datetime.strptime(_[5][0:9], "%m/%d/%Y"),
+            unit_price=_[6],
+            quantity=_[7],
+            extended_price=_[8],
+        )
+
+
 if __name__ == "__main__":
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
+    import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
