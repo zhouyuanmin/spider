@@ -805,7 +805,7 @@ def import_order_filled(path, begin_row, begin_col, end_col):
             mfr_part_number=_[2],
             item_name=_[3],
             mfr_name=_[4],
-            date=datetime.datetime.strptime(_[5][0:9], "%m/%d/%Y"),
+            date=datetime.datetime.now(),
             unit_price=_[6],
             quantity=_[7],
             extended_price=_[8],
