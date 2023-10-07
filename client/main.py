@@ -798,7 +798,8 @@ def import_order_filled(path, begin_row, begin_col, end_col):
         for item in excel_data:
             row_data.append(item[i])
         data.append(row_data)
-    for _ in data:
+    for i, _ in enumerate(data):
+        print(i, _)
         models.OrderFilled.objects.create(
             contractor_name=_[0],
             contract_number=_[1],
@@ -817,4 +818,4 @@ if __name__ == "__main__":
     # spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
-    import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
+    # import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
