@@ -163,3 +163,38 @@ class OrderFilled(BaseModel):
         default=0,
         verbose_name="总价",
     )
+
+
+class OrderGood(BaseModel):
+    """成交单商品"""
+
+    contractor_name = models.CharField(max_length=255, default="", verbose_name="承包商名称")
+    contract_number = models.CharField(max_length=255, default="", verbose_name="合同编号")
+    mfr_part_number = models.CharField(max_length=255, default="", verbose_name="零件号")
+    item_name = models.CharField(max_length=255, default="", verbose_name="物品名称")
+    mfr_name = models.CharField(max_length=255, default="", verbose_name="制造商名称")
+    extended_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="总价",
+    )
+
+
+class OrderFilledStat(BaseModel):
+    """成交单统计"""
+
+    mfr_part_number = models.CharField(max_length=255, default="", verbose_name="零件号")
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="单价",
+    )
+    quantity = models.IntegerField(default=0, verbose_name="数量")
+    extended_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="总价",
+    )
