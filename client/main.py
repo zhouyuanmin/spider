@@ -800,10 +800,15 @@ def import_order_filled(path, begin_row, begin_col, end_col):
         data.append(row_data)
     for i, _ in enumerate(data):
         print(i, _)
+
+        part = _[2]
+        if isinstance(part, float):
+            part = str(int(part))
+
         models.OrderFilled.objects.create(
             contractor_name=_[0],
             contract_number=_[1],
-            mfr_part_number=_[2],
+            mfr_part_number=part,
             item_name=_[3],
             mfr_name=_[4],
             date=datetime.datetime.now(),
@@ -818,4 +823,4 @@ if __name__ == "__main__":
     # spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
-    # import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
+    import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
