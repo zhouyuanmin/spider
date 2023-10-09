@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from selenium.common import exceptions
 from selenium import webdriver
 from pathlib import Path
@@ -839,6 +840,34 @@ def order_filled_to_order_good():
             models.OrderGood.objects.bulk_create(objs_list)
             objs_list = []
     models.OrderGood.objects.bulk_create(objs_list)
+
+
+def order_filled_stat():
+    """成交单统计"""
+    order_filled_objs = models.OrderFilled.objects.all()
+    order_good_objs = models.OrderGood.objects.all()
+    id_mfr_part_numbers = list(order_good_objs.values_list("id", "mfr_part_number"))
+
+    for i, part in id_mfr_part_numbers:
+        print(i, part)
+        kys = (
+            order_filled_objs.filter(mfr_part_number=part)
+            .values("unit_price")
+            .annotate(quantity=Sum("quantity"))
+            .order_by("unit_price")
+        )
+        order_filled_stat_objs = []
+        for _ in kys:
+            unit_price = _.get("unit_price")
+            quantity = _.get("quantity")
+            obj = models.OrderFilledStat(
+                mfr_part_number=part,
+                unit_price=unit_price,
+                quantity=quantity,
+                extended_price=unit_price * quantity,
+            )
+            order_filled_stat_objs.append(obj)
+        models.OrderFilledStat.objects.bulk_create(order_filled_stat_objs)
 
 
 if __name__ == "__main__":
