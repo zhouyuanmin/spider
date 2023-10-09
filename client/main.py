@@ -818,6 +818,29 @@ def import_order_filled(path, begin_row, begin_col, end_col):
         )
 
 
+def order_filled_to_order_good():
+    objs = models.OrderFilled.objects.all()
+    mfr_part_numbers = objs.values_list("mfr_part_number", flat=True)
+    mfr_part_numbers = set(list(mfr_part_numbers))
+    # print(mfr_part_numbers)
+    objs_list = []
+    for part in mfr_part_numbers:
+        print(part)
+        _obj = objs.filter(mfr_part_number=part).first()
+        obj = models.OrderGood(
+            contractor_name=_obj.contractor_name,
+            contract_number=_obj.contract_number,
+            mfr_part_number=_obj.mfr_part_number,
+            item_name=_obj.item_name,
+            mfr_name=_obj.mfr_name,
+        )
+        objs_list.append(obj)
+        if len(objs_list) >= 500:
+            models.OrderGood.objects.bulk_create(objs_list)
+            objs_list = []
+    models.OrderGood.objects.bulk_create(objs_list)
+
+
 if __name__ == "__main__":
     pass
     # spider()
