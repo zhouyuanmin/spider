@@ -1,4 +1,4 @@
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from selenium.common import exceptions
 from selenium import webdriver
 from pathlib import Path
@@ -607,7 +607,7 @@ def spider():
     # 数据准备
     begin_row = 4
     data = get_data_by_excel(
-        "/Users/myard/Downloads/Updated CPLAPR15手动重要.xlsx",
+        "1.xlsx",
         begin_row=begin_row,
         cols=[1, 0],
     )
@@ -892,9 +892,54 @@ def order_filled_stat2():
     models.OrderGood.objects.bulk_update(objs_list, fields=["extended_price"])
 
 
+def export_stat(export_path="1.xlsx"):
+    order_good_objs = models.OrderGood.objects.all().order_by("-extended_price")
+    data = []
+    title = [
+        "contractor_name",
+        "contract_number",
+        "mfr_part_number",
+        "item_name",
+        "mfr_name",
+        "extended_price",  # 总价
+        "unit_price",
+        "quantity",
+        "extended_price",  # 分总价
+    ]
+    data.append(title)
+
+    order_filled_stat_objs = models.OrderFilledStat.objects.all()
+    for order_good_obj in order_good_objs:
+        logging.info(order_good_obj.pk)
+        row_data_first_1 = [
+            order_good_obj.contractor_name,
+            order_good_obj.contract_number,
+            order_good_obj.mfr_part_number,
+            order_good_obj.item_name,
+            order_good_obj.mfr_name,
+            order_good_obj.extended_price,
+        ]
+        row_data_first_2 = ["", "", "", "", "", ""]
+        index = 1
+        _objs = order_filled_stat_objs.filter(
+            mfr_part_number=order_good_obj.mfr_part_number
+        ).order_by("-extended_price")
+        for _obj in _objs:
+            row_data = []
+            row_data_end = [_obj.unit_price, _obj.quantity, _obj.extended_price]
+            if index == 1:
+                row_data = row_data_first_1 + row_data_end
+            else:
+                row_data = row_data_first_2 + row_data_end
+            data.append(row_data)
+            index += 1
+    save_data_to_excel(export_path, data)
+
+
 if __name__ == "__main__":
     pass
     # spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
     # import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
+    # export_stat()
