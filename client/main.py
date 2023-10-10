@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from selenium.common import exceptions
 from selenium import webdriver
 from pathlib import Path
@@ -868,6 +868,28 @@ def order_filled_stat():
             )
             order_filled_stat_objs.append(obj)
         models.OrderFilledStat.objects.bulk_create(order_filled_stat_objs)
+
+
+def order_filled_stat2():
+    """成交单统计2"""
+    order_filled_stat_objs = models.OrderFilledStat.objects.all()
+    kv_objs = order_filled_stat_objs.values("mfr_part_number").annotate(
+        extended_price_sum=Sum("extended_price")
+    )
+    kvs = {}
+    for _ in kv_objs:
+        kvs[_.get("mfr_part_number")] = _.get("extended_price_sum")
+
+    order_good_objs = models.OrderGood.objects.all()
+    objs_list = []
+    for order_good_obj in order_good_objs:
+        logging.info(order_good_obj.pk)
+        order_good_obj.extended_price = kvs.get(order_good_obj.mfr_part_number)
+        objs_list.append(order_good_obj)
+        if len(objs_list) >= 500:
+            models.OrderGood.objects.bulk_update(objs_list, fields=["extended_price"])
+            objs_list = []
+    models.OrderGood.objects.bulk_update(objs_list, fields=["extended_price"])
 
 
 if __name__ == "__main__":
