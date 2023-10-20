@@ -508,17 +508,17 @@ def get_model_param_by_gsa(browser, part):
                     gsa_advantage_prices[i] = get_dollar(text)
             product_description = (
                 product_description
-                if len(product_description) > 254
+                if len(product_description) < 254
                 else product_description[0:254]
             )
             product_description2_strong = (
                 product_description2_strong
-                if len(product_description2_strong) > 254
+                if len(product_description2_strong) < 254
                 else product_description2_strong[0:254]
             )
             product_description2 = (
                 product_description2
-                if len(product_description2) > 254
+                if len(product_description2) < 254
                 else product_description2[0:254]
             )
             item_data = {
@@ -620,7 +620,7 @@ def spider():
     browser_gsa = create_browser()
     browser_inm = create_browser()
     # 数据准备
-    begin_row = 1
+    begin_row = 12
     data = get_data_by_excel(
         "1.xlsx",
         begin_row=begin_row,
