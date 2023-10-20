@@ -605,7 +605,7 @@ def spider():
     browser_gsa = create_browser()
     browser_inm = create_browser()
     # 数据准备
-    begin_row = 4
+    begin_row = 1
     data = get_data_by_excel(
         "1.xlsx",
         begin_row=begin_row,
@@ -938,7 +938,7 @@ def export_stat(export_path="1.xlsx"):
 
 if __name__ == "__main__":
     pass
-    # spider()
+    spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
     # import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
