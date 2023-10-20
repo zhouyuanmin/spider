@@ -506,6 +506,21 @@ def get_model_param_by_gsa(browser, part):
                 text = div.text
                 if "$" in text:
                     gsa_advantage_prices[i] = get_dollar(text)
+            product_description = (
+                product_description
+                if len(product_description) > 254
+                else product_description[0:254]
+            )
+            product_description2_strong = (
+                product_description2_strong
+                if len(product_description2_strong) > 254
+                else product_description2_strong[0:254]
+            )
+            product_description2 = (
+                product_description2
+                if len(product_description2) > 254
+                else product_description2[0:254]
+            )
             item_data = {
                 "part": part,
                 "manufacturer_name": manufacturer_name,
