@@ -53,7 +53,7 @@ page_elements = {
     "search": '//*[@id="globalSearch"]',
     "product_list": '//*[@class="productListControl isList"]/app-ux-product-display-inline',
     "sources": './/span[@align="left"]',
-    "item_a": './/div[@class="itemName"]/a',
+    "item_a": './/div[@class="itemName"]//a',
     "mfr_name": './/div[@class="mfrName"]',
     "mfr_part_no_gsa": './/div[@class="mfrPartNumber"]',
     "product_name": '//h4[@role="heading"]',
@@ -367,7 +367,7 @@ def get_model_param_by_gsa(browser, part):
     if objs:
         return {}  # 存在则不需要再爬取
     else:
-        logging.warning(f"part={part},不存在,需要爬取数据")
+        logging.warning(f"GSA:part={part},不存在,需要爬取数据")
     # 搜索
     url = f"https://www.gsaadvantage.gov/advantage/ws/search/advantage_search?q=0:8{part}&db=0&searchType=0"
     browser.get(url)
