@@ -90,8 +90,8 @@ DATABASES = {
     },
     "mysql_cloud": {
         "ENGINE": "django.db.backends.mysql",
-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),  # 数据库主机
-        "PORT": int(os.getenv("DB_PORT", 3306)),  # 数据库端口
+        "HOST": os.getenv("DB_HOST", "myard.cn"),  # 数据库主机
+        "PORT": int(os.getenv("DB_PORT", 10001)),  # 数据库端口
         "USER": os.getenv("DB_USER", "root"),  # 数据库用户名
         "PASSWORD": os.getenv("DB_PASSWORD", "root123456"),  # 数据库用户密码
         "NAME": os.getenv("DB_NAME", "spider"),  # 数据库名字
