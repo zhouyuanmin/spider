@@ -620,7 +620,7 @@ def spider():
     browser_gsa = create_browser()
     browser_inm = create_browser()
     # 数据准备
-    begin_row = 12
+    begin_row = 1
     data = get_data_by_excel(
         "1.xlsx",
         begin_row=begin_row,
