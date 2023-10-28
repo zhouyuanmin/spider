@@ -951,10 +951,155 @@ def export_stat(export_path="1.xlsx"):
     save_data_to_excel(export_path, data)
 
 
+def export_by_parts(path="11_done.xlsx", parts=None, process=False):
+    """
+    path: 导出文件名称
+    parts: list
+    process: 是否加工
+    """
+    parts_1 = get_data_by_excel("/Users/myard/Desktop/1.xlsx", begin_row=1, cols=[3])[0]
+    parts_2 = get_data_by_excel("/Users/myard/Desktop/2.xlsx", begin_row=1, cols=[6])[0]
+    set_1 = set(parts_1) - set(parts_2)
+    parts = list(set_1)
+    parts.sort()
+
+    data = []
+    row_data = [
+        "contractor_name",  # OrderGood
+        "contract_number",  # OrderGood
+        "manufacturer_name",  # gsa
+        "mfr_part_number",  # OrderGood part
+        "vendor_part_no",  # ECGood
+        "item_name",  # OrderGood
+        "product_description",  # gsa
+        "mfr_name",  # OrderGood
+        "extended_price",  # OrderGood
+        "ingram_micro_price",  # ECGood
+        "msrp",  # ECGood
+        "federal_govt_spa",  # ECGood
+        "AMAZON",  # 暂无
+        "gsa_advantage_price_1",  # gsa
+        "gsa_advantage_price_2",  # gsa
+        "gsa_advantage_price_3",  # gsa
+        "coo",  # gsa
+        "url",  # gsa
+        "source",  # gsa
+    ]
+    data.append(row_data)
+    for i, part in enumerate(parts):
+        if not part:
+            continue
+        if isinstance(part, float):
+            part = str(int(part))
+        row_data = []
+        # 处理数据
+        ec_objs = ECGood.objects.filter(part=part)
+        if ec_objs:
+            ec_obj = ec_objs[0]
+        else:
+            if process:
+                continue
+            else:
+                ec_obj = ECGood(part=part)
+        if ec_obj.federal_govt_spa == 0 and ec_obj.ingram_micro_price == 0:
+            if process:
+                continue
+            else:
+                pass
+        gsa_objs = GSAGood.objects.filter(part=part)
+        if (not process) and (not gsa_objs):
+            gsa_obj = GSAGood(part=part)  # 没有的情况
+            with open("1.txt", "a+") as f:
+                f.write(f"{part}\n")
+            gsa_objs = [gsa_obj]
+
+        for gsa_obj in gsa_objs:
+            _row_data = []
+            _row_data.extend(row_data)
+            gsa_advantage_price_2 = float(gsa_obj.gsa_advantage_price_2)
+            # 判断数值是否合理
+            min_price = 0
+            if (
+                ec_obj.federal_govt_spa
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                min_price = ec_obj.federal_govt_spa
+            if (
+                ec_obj.ingram_micro_price
+                and 0.5 * gsa_advantage_price_2
+                <= ec_obj.federal_govt_spa
+                <= 1.5 * gsa_advantage_price_2
+            ):
+                if min_price == 0:
+                    min_price = ec_obj.ingram_micro_price
+                else:
+                    min_price = min(min_price, ec_obj.ingram_micro_price)
+            if min_price or (not process):  # 数据合理
+                # 处理描述
+                description = ""
+                if gsa_obj.product_description:
+                    description = gsa_obj.product_description
+                elif gsa_obj.product_description2:
+                    description = gsa_obj.product_description2
+                    if gsa_obj.product_description2_strong:
+                        strong = (
+                            gsa_obj.product_description2_strong.split("by")[-1]
+                            .strip()
+                            .strip(".")
+                        )
+                        description = description.replace(strong, "TechFocus LLC")
+                    if "For further" in description:
+                        description = description.split("For further")[0]
+                    description += "For further information contact TechFocus at 304-906-8124 Or email lwang@techfocusUSA.com"
+                else:
+                    description = ""
+                order_good_obj = models.OrderGood.objects.filter(
+                    mfr_part_number=part
+                ).first()
+                # 加数据
+                _row_data.append(
+                    order_good_obj.contractor_name
+                )  # "contractor_name",  # OrderGood
+                _row_data.append(
+                    order_good_obj.contract_number
+                )  # "contract_number",  # OrderGood
+                _row_data.append(
+                    gsa_obj.manufacturer_name
+                )  # "manufacturer_name",  # gsa
+                _row_data.append(part)  # "mfr_part_number",  # OrderGood part
+                _row_data.append(ec_obj.vendor_part_no)  # "vendor_part_no",  # ECGood
+                _row_data.append(order_good_obj.item_name)  # "item_name",  # OrderGood
+                _row_data.append(description)  # "product_description",  # gsa
+                _row_data.append(order_good_obj.mfr_name)  # "mfr_name",  # OrderGood
+                _row_data.append(
+                    order_good_obj.extended_price
+                ),  # "extended_price",  # OrderGood
+                _row_data.append(
+                    ec_obj.ingram_micro_price
+                )  # "ingram_micro_price",  # ECGood
+                _row_data.append(ec_obj.msrp)  # "msrp",  # ECGood
+                _row_data.append(
+                    ec_obj.federal_govt_spa
+                )  # "federal_govt_spa",  # ECGood
+                _row_data.append("")  # "AMAZON",  # 暂无
+                _row_data.append(gsa_obj.gsa_advantage_price_1)
+                _row_data.append(gsa_obj.gsa_advantage_price_2)
+                _row_data.append(gsa_obj.gsa_advantage_price_3)
+                _row_data.append(gsa_obj.coo)
+                _row_data.append(gsa_obj.url)
+                _row_data.append(gsa_obj.source)
+                data.append(_row_data)
+
+    save_data_to_excel(path, data)
+
+
 if __name__ == "__main__":
     pass
-    spider()
+    # spider()
     # export("", 3, 0, 6, 1, True)
     # export("", 3, 0, 6, 1, False)
     # import_order_filled("/Users/myard/Desktop/1.xlsx", 1, 0, 8)
     # export_stat()
+    # export_by_parts()
